@@ -1,0 +1,84 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  labels:
+    app: master2.vacm1.outbound.vz.bos2.lab
+  name: master2.vacm1.outbound.vz.bos2.lab
+  namespace: vacm-hub1
+spec:
+  dataVolumeTemplates:
+    - apiVersion: cdi.kubevirt.io/v1beta1
+      kind: DataVolume
+      metadata:
+        name: master2-rootdisk
+      spec:
+        storage:
+          resources:
+            requests:
+              storage: 120Gi
+    - apiVersion: cdi.kubevirt.io/v1beta1
+      kind: DataVolume
+      metadata:
+        name: master2-cdroom
+      spec:
+        source:
+          http:
+            url: "http://192.168.58.15/iso/vacm1.iso"
+        storage:
+          resources:
+            requests:
+              storage: 5Gi
+  runStrategy: RerunOnFailure
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: master2.vacm1.outbound.vz.bos2.lab
+    spec:
+      architecture: amd64
+      domain:
+        cpu:
+          cores: 8
+          sockets: 1
+          threads: 2
+        devices:
+          disks:
+            - disk:
+                bus: virtio
+              name: rootdisk
+            - disk:
+                bus: scsi
+              name: cdrom
+          interfaces:
+            - bridge: {}
+              macAddress: de:ad:be:ff:20:10
+              model: virtio
+              name: enp1s0
+        memory:
+          guest: 16Gi
+      networks:
+        - multus:
+            networkName: localnet-network
+          name: enp1s0
+      terminationGracePeriodSeconds: 180
+      volumes:
+        - dataVolume:
+            name: master2-rootdisk
+          name: rootdisk
+        - dataVolume:
+            name: master2-cdrom
+          name: cdrom
+        - cloudInitNoCloud:
+            networkData: |
+              ethernets:
+                enp1s0:
+                  addresses:
+                    - 192.168.58.52
+                  gateway4: 192.168.58.1
+              version: 2
+            userData: |-
+              #cloud-config
+              user: cloud-user
+              password: h02h-rieh-vu0t
+              chpasswd: { expire: False }
+          name: cloudinitdisk
+
