@@ -6,6 +6,7 @@ metadata:
   name: sno1.outbound.vz.bos2.lab
   namespace: sno-clusters
 spec:
+  runStrategy: RerunOnFailure
   dataVolumeTemplates:
     - apiVersion: cdi.kubevirt.io/v1beta1
       kind: DataVolume
