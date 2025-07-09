@@ -6,6 +6,7 @@ metadata:
   name: master2.vacm1.outbound.vz.bos2.lab
   namespace: vacm-hub1
 spec:
+  runStrategy: RerunOnFailure
   template:
     metadata:
       labels:
@@ -23,7 +24,7 @@ spec:
                 bus: virtio
               name: rootdisk
           interfaces:
-            - bridge: {}
+            - bridge: { }
               macAddress: de:ad:be:ff:20:10
               model: virtio
               name: enp1s0
@@ -38,9 +39,6 @@ spec:
         - dataVolume:
             name: master2-rootdisk
           name: rootdisk
-        - dataVolume:
-            name: master2-cdrom
-          name: cdrom
         - cloudInitNoCloud:
             networkData: |
               ethernets:
@@ -50,4 +48,5 @@ spec:
                   gateway4: 192.168.58.1
               version: 2
           name: cloudinitdisk
+
 

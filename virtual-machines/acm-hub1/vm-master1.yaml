@@ -6,6 +6,7 @@ metadata:
   name: master1.vacm1.outbound.vz.bos2.lab
   namespace: vacm-hub1
 spec:
+  runStrategy: RerunOnFailure
   template:
     metadata:
       labels:
@@ -19,33 +20,33 @@ spec:
           threads: 2
         devices:
           disks:
-          - disk:
-              bus: virtio
-            name: rootdisk
+            - disk:
+                bus: virtio
+              name: rootdisk
           interfaces:
-          - bridge: {}
-            macAddress: de:ad:be:ff:20:00
-            model: virtio
-            name: enp1s0
+            - bridge: { }
+              macAddress: de:ad:be:ff:20:00
+              model: virtio
+              name: enp1s0
         memory:
           guest: 16Gi
       networks:
-      - multus:
-          networkName: localnet-network
-        name: enp1s0
+        - multus:
+            networkName: localnet-network
+          name: enp1s0
       terminationGracePeriodSeconds: 180
       volumes:
-      - dataVolume:
-          name: master1-rootdisk
-        name: rootdisk
-      - cloudInitNoCloud:
-          networkData: |
-            ethernets:
-              enp1s0:
-                addresses:
-                  - 192.168.58.51
-                gateway4: 192.168.58.1
-            version: 2
-        name: cloudinitdisk
+        - dataVolume:
+            name: master1-rootdisk
+          name: rootdisk
+        - cloudInitNoCloud:
+            networkData: |
+              ethernets:
+                enp1s0:
+                  addresses:
+                    - 192.168.58.51
+                  gateway4: 192.168.58.1
+              version: 2
+          name: cloudinitdisk
 
 

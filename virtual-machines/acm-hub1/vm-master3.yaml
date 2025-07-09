@@ -6,6 +6,7 @@ metadata:
   name: master3.vacm1.outbound.vz.bos2.lab
   namespace: vacm-hub1
 spec:
+  runStrategy: RerunOnFailure
   template:
     metadata:
       labels:
@@ -47,4 +48,5 @@ spec:
                   gateway4: 192.168.58.1
               version: 2
           name: cloudinitdisk
+
 

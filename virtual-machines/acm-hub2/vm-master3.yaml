@@ -6,6 +6,7 @@ metadata:
   name: master3.vacm2.outbound.vz.bos2.lab
   namespace: vacm-hub2
 spec:
+  runStrategy: RerunOnFailure
   template:
     metadata:
       labels:
@@ -23,7 +24,7 @@ spec:
                 bus: virtio
               name: rootdisk
           interfaces:
-            - bridge: {}
+            - bridge: { }
               macAddress: de:ad:be:ff:40:20
               model: virtio
               name: enp1s0
