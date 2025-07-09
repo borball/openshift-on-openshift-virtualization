@@ -2,14 +2,29 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   labels:
-    app: master1.vacm2.outbound.vz.bos2.lab
-  name: master1.vacm2.outbound.vz.bos2.lab
-  namespace: vacm-hub2
+    app: sno1.outbound.vz.bos2.lab
+  name: sno1.outbound.vz.bos2.lab
+  namespace: sno-clusters
 spec:
+  dataVolumeTemplates:
+    - apiVersion: cdi.kubevirt.io/v1beta1
+      kind: DataVolume
+      metadata:
+        annotations:
+          cdi.kubevirt.io/storage.bind.immediate.requested: 'true'
+        creationTimestamp: null
+        name: sno1-rootdisk
+      spec:
+        source:
+          blank: {}
+        storage:
+          resources:
+            requests:
+              storage: 120Gi
   template:
     metadata:
       labels:
-        kubevirt.io/domain: master1.vacm2.outbound.vz.bos2.lab
+        kubevirt.io/domain: sno1.outbound.vz.bos2.lab
     spec:
       architecture: amd64
       domain:
@@ -24,11 +39,11 @@ spec:
             name: rootdisk
           interfaces:
           - bridge: {}
-            macAddress: de:ad:be:ff:40:00
+            macAddress: de:ad:be:ff:20:30
             model: virtio
             name: enp1s0
         memory:
-          guest: 16Gi
+          guest: 24Gi
       networks:
       - multus:
           networkName: localnet-network
@@ -36,14 +51,14 @@ spec:
       terminationGracePeriodSeconds: 180
       volumes:
       - dataVolume:
-          name: master1-rootdisk
+          name: sno1-rootdisk
         name: rootdisk
       - cloudInitNoCloud:
           networkData: |
             ethernets:
               enp1s0:
                 addresses:
-                  - 192.168.58.71
+                  - 192.168.58.55
                 gateway4: 192.168.58.1
             version: 2
         name: cloudinitdisk

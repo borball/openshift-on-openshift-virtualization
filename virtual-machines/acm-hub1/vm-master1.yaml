@@ -6,29 +6,6 @@ metadata:
   name: master1.vacm1.outbound.vz.bos2.lab
   namespace: vacm-hub1
 spec:
-  dataVolumeTemplates:
-  - apiVersion: cdi.kubevirt.io/v1beta1
-    kind: DataVolume
-    metadata:
-      name: master1-rootdisk
-    spec:
-      storage:
-        resources:
-          requests:
-            storage: 120Gi
-  - apiVersion: cdi.kubevirt.io/v1beta1
-    kind: DataVolume
-    metadata:
-      name: master1-cdroom
-    spec:
-      source:
-        http:
-          url: "http://192.168.58.15/iso/vacm1.iso"
-      storage:
-        resources:
-          requests:
-            storage: 5Gi
-  runStrategy: RerunOnFailure
   template:
     metadata:
       labels:
@@ -45,9 +22,6 @@ spec:
           - disk:
               bus: virtio
             name: rootdisk
-          - disk:
-              bus: scsi
-            name: cdrom
           interfaces:
           - bridge: {}
             macAddress: de:ad:be:ff:20:00
@@ -64,9 +38,6 @@ spec:
       - dataVolume:
           name: master1-rootdisk
         name: rootdisk
-      - dataVolume:
-          name: master1-cdrom
-        name: cdrom
       - cloudInitNoCloud:
           networkData: |
             ethernets:
@@ -75,11 +46,6 @@ spec:
                   - 192.168.58.51
                 gateway4: 192.168.58.1
             version: 2
-          userData: |-
-            #cloud-config
-            user: cloud-user
-            password: h02h-rieh-vu0t
-            chpasswd: { expire: False }
         name: cloudinitdisk
 
 
