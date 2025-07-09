@@ -2,15 +2,15 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   labels:
-    app: master3.vacm1.outbound.vz.bos2.lab
-  name: master3.vacm1.outbound.vz.bos2.lab
+    app: master3
+  name: master3
   namespace: vacm-hub1
 spec:
   runStrategy: RerunOnFailure
   template:
     metadata:
       labels:
-        kubevirt.io/domain: master3.vacm1.outbound.vz.bos2.lab
+        kubevirt.io/domain: master3
     spec:
       architecture: amd64
       domain:

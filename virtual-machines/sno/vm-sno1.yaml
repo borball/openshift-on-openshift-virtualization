@@ -2,8 +2,8 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   labels:
-    app: sno1.outbound.vz.bos2.lab
-  name: sno1.outbound.vz.bos2.lab
+    app: sno1
+  name: sno1
   namespace: sno-clusters
 spec:
   runStrategy: RerunOnFailure
@@ -25,7 +25,7 @@ spec:
   template:
     metadata:
       labels:
-        kubevirt.io/domain: sno1.outbound.vz.bos2.lab
+        kubevirt.io/domain: sno1
     spec:
       architecture: amd64
       domain:
