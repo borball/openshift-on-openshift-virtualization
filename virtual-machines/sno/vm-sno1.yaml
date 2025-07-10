@@ -6,7 +6,7 @@ metadata:
   name: sno1
   namespace: sno-clusters
 spec:
-  runStrategy: RerunOnFailure
+  runStrategy: Halted
   dataVolumeTemplates:
     - kind: DataVolume
       metadata: 
@@ -41,7 +41,8 @@ spec:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
-          blank: {}
+          http:
+            url: http://192.168.58.15/iso/sno1.iso
           size: 5Gi
         storage:
           resources:

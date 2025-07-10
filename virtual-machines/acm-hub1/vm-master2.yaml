@@ -6,7 +6,7 @@ metadata:
   name: master2
   namespace: vacm-hub1
 spec:
-  runStrategy: RerunOnFailure
+  runStrategy: Halted
   dataVolumeTemplates:
     - kind: DataVolume
       metadata:
@@ -41,7 +41,8 @@ spec:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
-          blank: {}
+          http:
+            url: http://192.168.58.15/iso/vacm1.iso
           size: 5Gi
         storage:
           resources:
