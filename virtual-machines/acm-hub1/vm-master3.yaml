@@ -9,29 +9,26 @@ spec:
   runStrategy: RerunOnFailure
   dataVolumeTemplates:
     - kind: DataVolume
-      metadata:
+      metadata: 
         name: master3-rootdisk
       spec:
-        storage:
-          resources:
-            requests:
-              storage: 120Gi
+        source:
+          blank: {}
+          size: 120Gi
     - kind: DataVolume
       metadata:
         name: master3-data
       spec:
-        storage:
-          resources:
-            requests:
-              storage: 100Gi
+        source:
+          blank: {}
+          size: 100Gi
     - kind: DataVolume
       metadata:
         name: master3-cdroom
       spec:
-        storage:
-          resources:
-            requests:
-              storage: 5Gi
+        source:
+          blank: {}
+          size: 5Gi
 
   template:
     metadata:
