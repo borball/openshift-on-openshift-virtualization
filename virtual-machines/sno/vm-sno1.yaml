@@ -69,7 +69,7 @@ spec:
             - disk:
                 bus: virtio
               name: data
-            - disk:
+            - cdrom:
                 bus: scsi
               name: cdroom
               bootOrder: 1
