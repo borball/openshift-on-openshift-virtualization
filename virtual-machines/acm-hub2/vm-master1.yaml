@@ -7,6 +7,44 @@ metadata:
   namespace: vacm-hub2
 spec:
   runStrategy: RerunOnFailure
+  dataVolumeTemplates:
+    - name: master1-rootdisk
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 120Gi
+        storage:
+          resources:
+            requests:
+              storage: 120Gi
+    - name: master1-data
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Gi
+        storage:
+          resources:
+            requests:
+              storage: 100Gi
+    - name: master1-cdroom
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+        storage:
+          resources:
+            requests:
+              storage: 5Gi
+
   template:
     metadata:
       labels:
@@ -23,6 +61,12 @@ spec:
             - disk:
                 bus: virtio
               name: rootdisk
+            - disk:
+                bus: virtio
+              name: data
+            - disk:
+                bus: scsi
+              name: cdroom
           interfaces:
             - bridge: { }
               macAddress: de:ad:be:ff:40:00
@@ -39,14 +83,11 @@ spec:
         - dataVolume:
             name: master1-rootdisk
           name: rootdisk
-        - cloudInitNoCloud:
-            networkData: |
-              ethernets:
-                enp1s0:
-                  addresses:
-                    - 192.168.58.71
-                  gateway4: 192.168.58.1
-              version: 2
-          name: cloudinitdisk
+        - dataVolume:
+            name: master1-data
+          name: data
+        - dataVolume:
+            name: master1-cdroom
+          name: cdroom
 
 

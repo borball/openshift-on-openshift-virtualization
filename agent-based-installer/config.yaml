@@ -1,0 +1,64 @@
+cluster:
+  domain: outbound.vz.bos2.lab
+  name: vacm1
+  apiVIPs:
+    - 192.168.58.50
+  ingressVIPs:
+    - 192.168.58.54
+
+hosts:
+  common:
+    ipv4:
+      enabled: true
+      dhcp: false
+      machine_network_cidr: 192.168.58.0/25
+      machine_network_prefix: 25
+      dns: 192.168.58.15
+      gateway: 192.168.58.1
+    ipv6:
+      enabled: false
+      dhcp: false
+    vlan:
+      enabled: false
+    disk: /dev/vda
+
+  masters:
+    - hostname: master1.vacm1.outbound.vz.bos2.lab
+      interface: ens1f0
+      mac: de:ad:be:ff:20:00
+      ipv4:
+        ip: 192.168.58.51
+      bmc:
+        address: http://vacm-hub1-master1-virtbmc-kubevirtbmc-system.apps.vhub.outbound.vz.bos2.lab
+        password: admin:password
+    - hostname: master2.vacm1.outbound.vz.bos2.lab
+      interface: ens1f0
+      mac: de:ad:be:ff:20:10
+      ipv4:
+        ip: 192.168.58.52
+      bmc:
+        address: http://vacm-hub1-master2-virtbmc-kubevirtbmc-system.apps.vhub.outbound.vz.bos2.lab
+        password: admin:password
+    - hostname: master3.vacm1.outbound.vz.bos2.lab
+      interface: ens1f0
+      mac: de:ad:be:ff:20:20
+      ipv4:
+        ip: 192.168.58.53
+      bmc:
+        address: http://vacm-hub1-master3-virtbmc-kubevirtbmc-system.apps.vhub.outbound.vz.bos2.lab
+        password: admin:password
+
+day1:
+  operators:
+    rhacm:
+      enabled: true
+    talm:
+      enabled: true
+
+day2:
+
+pull_secret: /root/pull-secret.json
+ssh_key: /root/.ssh/id_rsa.pub
+
+iso:
+  address: http://192.168.58.15/iso/vacm1.iso
