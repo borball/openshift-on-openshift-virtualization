@@ -11,6 +11,8 @@ spec:
     - kind: DataVolume
       metadata:
         name: master2-rootdisk
+        annotations:
+          cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           blank: {}
@@ -24,6 +26,8 @@ spec:
     - kind: DataVolume
       metadata:
         name: master2-data
+        annotations:
+          cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           blank: {}
@@ -37,6 +41,8 @@ spec:
     - kind: DataVolume
       metadata:
         name: master2-cdroom
+        annotations:
+          cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           blank: {}
