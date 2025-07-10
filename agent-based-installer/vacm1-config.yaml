@@ -28,25 +28,16 @@ hosts:
       mac: de:ad:be:ff:20:00
       ipv4:
         ip: 192.168.58.51
-      bmc:
-        address: http://vacm-hub1-master1-virtbmc-kubevirtbmc-system.apps.vhub.outbound.vz.bos2.lab
-        password: admin:password
     - hostname: master2.vacm1.outbound.vz.bos2.lab
       interface: ens1f0
       mac: de:ad:be:ff:20:10
       ipv4:
         ip: 192.168.58.52
-      bmc:
-        address: http://vacm-hub1-master2-virtbmc-kubevirtbmc-system.apps.vhub.outbound.vz.bos2.lab
-        password: admin:password
     - hostname: master3.vacm1.outbound.vz.bos2.lab
       interface: ens1f0
       mac: de:ad:be:ff:20:20
       ipv4:
         ip: 192.168.58.53
-      bmc:
-        address: http://vacm-hub1-master3-virtbmc-kubevirtbmc-system.apps.vhub.outbound.vz.bos2.lab
-        password: admin:password
 
 day1:
   operators:
