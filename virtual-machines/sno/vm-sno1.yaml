@@ -12,12 +12,6 @@ spec:
       metadata:
         name: sno1-rootdisk
       spec:
-        pvc:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 120Gi
         storage:
           resources:
             requests:
@@ -26,24 +20,14 @@ spec:
       metadata:
         name: sno1-data
       spec:
-        pvc:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 100Gi
         storage:
           resources:
             requests:
               storage: 100Gi
-    - name: sno1-cdroom
+    - kind: DataVolume
+      metadata:
+        name: sno1-cdrom
       spec:
-        pvc:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 5Gi
         storage:
           resources:
             requests:

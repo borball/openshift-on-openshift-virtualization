@@ -12,12 +12,6 @@ spec:
       metadata:
         name: master2-rootdisk
       spec:
-        pvc:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 120Gi
         storage:
           resources:
             requests:
@@ -26,12 +20,6 @@ spec:
       metadata:
         name: master2-data
       spec:
-        pvc:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 100Gi
         storage:
           resources:
             requests:
@@ -40,12 +28,6 @@ spec:
       metadata:
         name: master2-cdroom
       spec:
-        pvc:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 5Gi
         storage:
           resources:
             requests:
