@@ -45,6 +45,8 @@ day1:
       enabled: true
     talm:
       enabled: true
+    odf:
+      enabled: true
 
 day2:
 

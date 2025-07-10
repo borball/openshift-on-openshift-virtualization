@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm -rf mno-with-abi
 git clone git@github.com:borball/mno-with-abi.git
 cp vacm1-config.yaml mno-with-abi/vacm1-config.yaml
 cd mno-with-abi
