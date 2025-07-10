@@ -8,20 +8,47 @@ metadata:
 spec:
   runStrategy: RerunOnFailure
   dataVolumeTemplates:
-    - apiVersion: cdi.kubevirt.io/v1beta1
-      kind: DataVolume
+    - kind: DataVolume
       metadata:
-        annotations:
-          cdi.kubevirt.io/storage.bind.immediate.requested: 'true'
-        creationTimestamp: null
         name: sno1-rootdisk
       spec:
-        source:
-          blank: {}
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 120Gi
         storage:
           resources:
             requests:
               storage: 120Gi
+    - kind: DataVolume
+      metadata:
+        name: sno1-data
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Gi
+        storage:
+          resources:
+            requests:
+              storage: 100Gi
+    - name: sno1-cdroom
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+        storage:
+          resources:
+            requests:
+              storage: 5Gi
+
   template:
     metadata:
       labels:
@@ -35,33 +62,36 @@ spec:
           threads: 2
         devices:
           disks:
-          - disk:
-              bus: virtio
-            name: rootdisk
+            - disk:
+                bus: virtio
+              name: rootdisk
+            - disk:
+                bus: virtio
+              name: data
+            - disk:
+                bus: scsi
+              name: cdroom
           interfaces:
-          - bridge: {}
-            macAddress: de:ad:be:ff:20:30
-            model: virtio
-            name: enp1s0
+            - bridge: {}
+              macAddress: de:ad:be:ff:20:30
+              model: virtio
+              name: enp1s0
         memory:
-      networks:
           guest: 24Gi
-      - multus:
-          networkName: localnet-network
-        name: enp1s0
+      networks:
+        - multus:
+            networkName: localnet-network
+          name: enp1s0
       terminationGracePeriodSeconds: 180
       volumes:
-      - dataVolume:
-          name: sno1-rootdisk
-        name: rootdisk
-      - cloudInitNoCloud:
-          networkData: |
-            ethernets:
-              enp1s0:
-                addresses:
-                  - 192.168.58.55
-                gateway4: 192.168.58.1
-            version: 2
-        name: cloudinitdisk
+        - dataVolume:
+            name: sno1-rootdisk
+          name: rootdisk
+        - dataVolume:
+            name: sno1-data
+          name: data
+        - dataVolume:
+            name: sno1-cdroom
+          name: cdroom
 
 

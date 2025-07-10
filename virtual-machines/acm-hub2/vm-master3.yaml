@@ -8,7 +8,9 @@ metadata:
 spec:
   runStrategy: RerunOnFailure
   dataVolumeTemplates:
-    - name: master3-rootdisk
+    - kind: DataVolume
+      metadata:
+        name: master3-rootdisk
       spec:
         pvc:
           accessModes:
@@ -20,7 +22,9 @@ spec:
           resources:
             requests:
               storage: 120Gi
-    - name: master3-data
+    - kind: DataVolume
+      metadata:
+        name: master3-data
       spec:
         pvc:
           accessModes:
@@ -32,7 +36,9 @@ spec:
           resources:
             requests:
               storage: 100Gi
-    - name: master3-cdroom
+    - kind: DataVolume
+      metadata:
+        name: master3-cdroom
       spec:
         pvc:
           accessModes:
