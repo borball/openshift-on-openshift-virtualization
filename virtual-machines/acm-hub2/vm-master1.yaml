@@ -14,7 +14,13 @@ spec:
       spec:
         source:
           blank: {}
-          size: 120Gi
+          size: 120Gi 
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 120Gi
     - kind: DataVolume
       metadata:
         name: master1-data
@@ -22,6 +28,12 @@ spec:
         source:
           blank: {}
           size: 100Gi
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Gi
     - kind: DataVolume
       metadata:
         name: master1-cdroom
@@ -29,7 +41,12 @@ spec:
         source:
           blank: {}
           size: 5Gi
-
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
   template:
     metadata:
       labels:
