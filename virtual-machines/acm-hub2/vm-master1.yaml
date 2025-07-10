@@ -64,12 +64,14 @@ spec:
             - disk:
                 bus: virtio
               name: rootdisk
+              bootOrder: 2
             - disk:
                 bus: virtio
               name: data
             - disk:
                 bus: scsi
               name: cdroom
+              bootOrder: 1
           interfaces:
             - bridge: { }
               macAddress: de:ad:be:ff:40:00

@@ -15,10 +15,13 @@ create_localnet(){
 }
 
 creare-acm-hub1-vms(){
+    #those vms are created with the iso mounted to them, inital state is halted
     oc apply -k virtual-machines/acm-hub1
 }
 
 power_on_acm-hub1-vms(){
+    #power on the vms so they can boot from the iso
+
 }
 
 power_off_acm-hub1-vms(){
