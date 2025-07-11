@@ -19,7 +19,7 @@ create_iso(){
     cp instances/$cluster/agent.x86_64.iso /var/www/html/iso/$cluster.iso
 }
 
-creare-vms(){
+create_vms(){
     oc apply -k virtual-machines/$cluster
 }
 
@@ -30,6 +30,6 @@ power_on_vms(){
 }
 
 create_iso
-creare-vms
+create_vms
 power_on_vms
 
