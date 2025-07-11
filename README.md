@@ -1,0 +1,258 @@
+# OpenShift on OpenShift Virtualization
+
+This repository provides automated tooling and configurations for deploying OpenShift clusters on top of OpenShift Virtualization. It supports both Single Node OpenShift (SNO) and Multi Node OpenShift (MNO) deployments using Agent Based Installer (ABI) with virtual machines.
+
+## Overview
+
+The solution leverages OpenShift Virtualization to create virtual machines that host OpenShift clusters, providing a nested virtualization approach for OpenShift deployments. This is particularly useful for testing, development, and edge computing scenarios.
+
+## Repository Structure
+
+```
+openshift-on-openshift-virtualization/
+├── README.md                           # This file
+├── pre-setup.sh                        # Sets up local network configuration
+├── install-sno.sh                      # SNO installation script  
+├── install-mno.sh                      # MNO installation script
+├── abi-configs/                        # Agent Based Installer configurations
+│   ├── sno100.yaml                     # SNO cluster configuration
+│   ├── vacm1.yaml                      # MNO cluster configuration (vacm1)
+│   └── vacm2.yaml                      # MNO cluster configuration (vacm2)
+└── virtual-machines/                   # VM definitions and networking
+    ├── localnet.yaml                   # Local network bridge mapping
+    ├── vsno/                           # SNO VM configurations
+    │   └── sno100/                     # SNO100 cluster VMs
+    ├── vacm1/                          # VACM1 cluster VMs
+    │   ├── kustomization.yaml          # Kustomize configuration
+    │   ├── ns.yaml                     # Namespace definition
+    │   ├── network-attachment-definition.yaml
+    │   ├── vm-master1.yaml             # Master node 1 VM
+    │   ├── vm-master2.yaml             # Master node 2 VM
+    │   └── vm-master3.yaml             # Master node 3 VM
+    └── vacm2/                          # VACM2 cluster VMs
+        └── [similar structure to vacm1]
+```
+
+## Prerequisites
+
+### Infrastructure Requirements
+- OpenShift cluster with OpenShift Virtualization operator installed
+- Sufficient compute resources for nested virtualization
+- Network connectivity for VM management
+- Storage for VM disks and ISO images
+
+### Software Dependencies
+- `oc` (OpenShift CLI)
+- `virtctl` (KubeVirt CLI)
+- `git` for cloning dependencies
+- Web server for hosting ISO images (configured at `http://192.168.58.15/iso/`)
+
+### External Dependencies
+This repository depends on external tools:
+- [sno-agent-based-installer](https://github.com/borball/sno-agent-based-installer) - For SNO deployments
+- [mno-with-abi](https://github.com/borball/mno-with-abi) - For MNO deployments
+
+## Configuration
+
+### ABI Configuration Files
+
+The `abi-configs/` directory contains cluster-specific configurations:
+
+#### SNO Configuration (`sno100.yaml`)
+Currently empty - needs to be populated with SNO-specific parameters.
+
+#### MNO Configuration (`vacm1.yaml` example)
+```yaml
+cluster:
+  domain: outbound.vz.bos2.lab
+  name: vacm1
+  apiVIPs: ["192.168.58.50"]
+  ingressVIPs: ["192.168.58.54"]
+
+hosts:
+  common:
+    ipv4:
+      enabled: true
+      dhcp: false
+      machine_network_cidr: 192.168.58.0/25
+      dns: 192.168.58.15
+      gateway: 192.168.58.1
+    disk: /dev/vda
+
+  masters:
+    - hostname: master1.vacm1.outbound.vz.bos2.lab
+      interface: ens1f0
+      mac: de:ad:be:ff:20:00
+      ipv4:
+        ip: 192.168.58.51
+    # ... additional masters
+```
+
+### Virtual Machine Specifications
+
+#### SNO VM Configuration
+- **CPU**: 8 cores, 1 socket, 2 threads
+- **Memory**: 24Gi
+- **Storage**: 120Gi root disk + 100Gi data disk
+- **Network**: Virtio interface with localnet networking
+
+#### MNO VM Configuration (per node)
+- **CPU**: 8 cores, 1 socket, 2 threads  
+- **Memory**: 16Gi
+- **Storage**: 120Gi root disk + 100Gi data disk
+- **Network**: Virtio interface with localnet networking
+
+## Usage
+
+### 1. Pre-setup
+Set up the local network configuration:
+```bash
+./pre-setup.sh
+```
+
+This creates the necessary network bridge mappings for VM connectivity.
+
+### 2. Deploy Single Node OpenShift (SNO)
+```bash
+./install-sno.sh <cluster-name>
+```
+
+Example:
+```bash
+./install-sno.sh sno100
+```
+
+This script:
+1. Clones the `sno-agent-based-installer` repository
+2. Copies the ABI configuration file
+3. Generates the OpenShift ISO using `sno-iso.sh`
+4. Copies the ISO to the web server location
+5. Creates the VM using Kustomize
+6. Powers on the VM using `virtctl`
+
+### 3. Deploy Multi Node OpenShift (MNO)
+```bash
+./install-mno.sh <cluster-name>
+```
+
+Example:
+```bash
+./install-mno.sh vacm1
+```
+
+This script:
+1. Clones the `mno-with-abi` repository
+2. Copies the ABI configuration file
+3. Generates the OpenShift ISO using `mno-iso.sh`
+4. Copies the ISO to the web server location
+5. Creates all master VMs using Kustomize
+6. Powers on all master VMs using `virtctl`
+
+## Network Configuration
+
+### Local Network Bridge Mapping
+The `localnet.yaml` file configures OVN bridge mappings:
+- Maps `localnet-network` to the `br-ex` bridge
+- Applied to worker nodes for VM networking
+
+### Network Attachment Definition
+Each cluster uses a `NetworkAttachmentDefinition` for VM networking:
+- **Type**: `ovn-k8s-cni-overlay`
+- **Topology**: `localnet`
+- **CNI Version**: 0.3.1
+
+## VM Management
+
+### Starting VMs
+```bash
+# SNO
+virtctl start <cluster-name> -n <cluster-name>
+
+# MNO
+virtctl start master1 -n <cluster-name>
+virtctl start master2 -n <cluster-name>
+virtctl start master3 -n <cluster-name>
+```
+
+### Stopping VMs
+```bash
+virtctl stop <vm-name> -n <namespace>
+```
+
+### Accessing VMs
+```bash
+virtctl console <vm-name> -n <namespace>
+```
+
+## Customization
+
+### Adding New Clusters
+1. Create ABI configuration file in `abi-configs/`
+2. Create VM definitions in `virtual-machines/`
+3. Update MAC addresses and IP configurations
+4. Ensure unique cluster names and namespaces
+
+### Modifying VM Resources
+Edit the VM YAML files to adjust:
+- CPU cores and memory
+- Storage sizes
+- Network interfaces
+- Boot order and devices
+
+### Network Customization
+Modify network configurations in:
+- `localnet.yaml` for bridge mappings
+- `network-attachment-definition.yaml` for VM networking
+- ABI configs for cluster networking
+
+## Troubleshooting
+
+### Common Issues
+1. **ISO not found**: Ensure the web server is running and ISO files are accessible
+2. **VM creation fails**: Check resource availability and storage classes
+3. **Network connectivity**: Verify bridge mappings and NetworkAttachmentDefinitions
+4. **Boot issues**: Check VM console logs and boot order configuration
+
+### Debugging Commands
+```bash
+# Check VM status
+oc get vms -n <namespace>
+
+# Check VM details
+oc describe vm <vm-name> -n <namespace>
+
+# Check network configuration
+oc get network-attachment-definitions -n <namespace>
+
+# Access VM console
+virtctl console <vm-name> -n <namespace>
+```
+
+## Dependencies and Requirements
+
+### OpenShift Cluster Requirements
+- OpenShift Virtualization operator installed
+- Sufficient worker nodes with virtualization capabilities
+- CNV (Container Native Virtualization) configured
+- Storage classes for VM disks
+
+### Network Requirements
+- Bridge network configuration on worker nodes
+- Access to ISO hosting web server
+- Proper DNS resolution for cluster domains
+
+### Resource Planning
+- **SNO**: ~24Gi RAM, 8 vCPUs, 220Gi storage per cluster
+- **MNO**: ~48Gi RAM, 24 vCPUs, 660Gi storage per cluster (3 masters)
+
+## Contributing
+
+When adding new configurations:
+1. Follow the existing naming conventions
+2. Update this README with new cluster configurations
+3. Test thoroughly before committing
+4. Document any special requirements or considerations
+
+## License
+
+This project follows the licensing terms of the referenced external repositories.
