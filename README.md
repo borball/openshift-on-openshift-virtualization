@@ -127,9 +127,11 @@ hosts:
 
 #### SNO VM Configuration
 - **CPU**: 8 cores, 1 socket, 2 threads
+- **CPU Isolation**: Cores 4-23 isolated, 0-3 reserved (configurable)
 - **Memory**: 24Gi
 - **Storage**: 120Gi root disk + 100Gi data disk
 - **Network**: Virtio interface with localnet networking
+- **MAC Address**: de:ad:be:ff:80:00
 
 #### MNO VM Configuration (per node)
 - **CPU**: 8 cores, 1 socket, 2 threads  
@@ -165,6 +167,12 @@ This script:
 5. Creates the VM using Kustomize
 6. Powers on the VM using `virtctl`
 
+**Note**: The current script includes TODO items for future enhancements:
+- Monitor the installation progress
+- Change VM boot order to boot from disk after installation
+- Wait for cluster to be ready
+- Unmount the ISO from the VM
+
 ### 3. Deploy Multi Node OpenShift (MNO)
 ```bash
 ./install-mno.sh <cluster-name>
@@ -175,13 +183,24 @@ Example:
 ./install-mno.sh vacm1
 ```
 
-This script:
+This script provides a complete automated deployment workflow:
 1. Clones the `mno-with-abi` repository
 2. Copies the ABI configuration file
 3. Generates the OpenShift ISO using `mno-iso.sh`
 4. Copies the ISO to the web server location
 5. Creates all master VMs using Kustomize
-6. Powers on all master VMs using `virtctl`
+6. Waits for all DataVolumes to be ready (up to 10 minutes)
+7. Powers on all master VMs using `virtctl`
+8. Monitors the installation progress via the Assisted Service API
+9. Waits for cluster stability (5-minute minimum stable period)
+10. Provides detailed progress reporting throughout the process
+
+**Features**:
+- **Automated monitoring**: Tracks installation progress and completion
+- **DataVolume readiness**: Ensures VMs are ready before powering on
+- **Cluster stability**: Waits for cluster to reach stable state
+- **Progress reporting**: Shows installation percentage and status
+- **Error handling**: Includes timeout and retry mechanisms
 
 ## Network Configuration
 
@@ -247,6 +266,9 @@ Modify network configurations in:
 2. **VM creation fails**: Check resource availability and storage classes
 3. **Network connectivity**: Verify bridge mappings and NetworkAttachmentDefinitions
 4. **Boot issues**: Check VM console logs and boot order configuration
+5. **DataVolume timeout**: If DataVolumes don't become ready within 10 minutes, check storage provisioning
+6. **Installation monitoring fails**: Verify SSH access to the rendezvous node and assisted service availability
+7. **Cluster stability timeout**: The MNO script waits for 5-minute stability; check cluster health during this phase
 
 ### Debugging Commands
 ```bash
@@ -256,11 +278,20 @@ oc get vms -n <namespace>
 # Check VM details
 oc describe vm <vm-name> -n <namespace>
 
+# Check DataVolume status
+oc get dv -n <namespace>
+
 # Check network configuration
 oc get network-attachment-definitions -n <namespace>
 
 # Access VM console
 virtctl console <vm-name> -n <namespace>
+
+# Monitor cluster installation status (for MNO)
+oc adm wait-for-stable-cluster --minimum-stable-period=5m
+
+# Check assisted service logs (on rendezvous node)
+ssh core@<rendezvous-ip> journalctl -u assisted-service
 ```
 
 ## Dependencies and Requirements

@@ -139,6 +139,8 @@ monitor_installation(){
 }
 
 wait_for_stable_cluster(){
+    export KUBECONFIG=$mno_workspace/instances/$cluster/auth/kubeconfig
+
     echo "Waiting for the cluster to be stable..."
     local interval=${1:-60}
     local next_run=0
@@ -170,6 +172,18 @@ unmount_iso_from_vms(){
     echo "Unmounting ISO from the VMs"
 }
 
+print_cluster_info(){
+    echo "Virtualization cluster info:"
+    echo "--------------------------------"
+    oc get nodes
+    echo "--------------------------------"
+    oc get clusterversion
+    echo "--------------------------------"
+    oc get co
+    echo "--------------------------------"
+    oc get csv -A -o custom-columns="0AME:.metadata.name,DISPLAY:.spec.displayName,VERSION:.spec.version" |sort -f|uniq|sed s/0AME/NAME/
+}
+
 #generate ISO with the cluster config and copy it to the web server
 create_iso
 
@@ -182,11 +196,8 @@ sleep 30
 power_on_vms
 sleep 30
 
-#todo, monitor the installation
 monitor_installation
 
-#todo, wait for the cluster to be ready
 wait_for_stable_cluster 60
 
-#todo, unmount the ISO from the VMs
-#unmount_iso_from_vms
+print_cluster_info
