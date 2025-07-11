@@ -168,7 +168,6 @@ wait_for_stable_cluster(){
     echo "Waiting for the cluster to be stable..."
     export KUBECONFIG=$mno_workspace/instances/$cluster/auth/kubeconfig
 
-    echo "Waiting for the cluster to be stable..."
     local interval=${1:-60}
     local next_run=0
     local skipped=""
