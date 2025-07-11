@@ -2,7 +2,7 @@ apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:
   name: localnet-network
-  namespace: vacm-hub1
+  namespace: vacm1
 spec:
   config: |-
     {
@@ -10,5 +10,5 @@ spec:
       "name": "localnet-network", 
       "type": "ovn-k8s-cni-overlay", 
       "topology": "localnet", 
-      "netAttachDefName": "vacm-hub1/localnet-network" 
+      "netAttachDefName": "vacm1/localnet-network" 
     }
