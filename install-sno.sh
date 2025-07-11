@@ -3,19 +3,25 @@ basedir="$(
   cd "$(dirname "$0")" >/dev/null 2>&1
   pwd -P
 )"
-sno_workspace=$basedir/sno-agent-based-installer
-iso_dir=/var/www/html/iso
-web_server=http://192.168.58.15/iso
 
 cluster=$1
-config_file=$sno_workspace/$cluster.yaml
-domain_name=$(yq '.cluster.domain' $config_file)
-api_fqdn="api."$cluster"."$domain_name
 
 if [ -z "$cluster" ]; then
   echo "Usage: $0 <cluster>"
   exit 1
 fi
+
+config_file=$basedir/abi-configs/$cluster.yaml
+if [ ! -f "$config_file" ]; then
+  echo "Config file $config_file for cluster $cluster not found, please check the config file in $basedir/abi-configs/"
+  exit 1
+fi
+
+sno_workspace=$basedir/sno-agent-based-installer
+iso_dir=/var/www/html/iso
+web_server=http://192.168.58.15/iso
+domain_name=$(yq '.cluster.domain' $config_file)
+api_fqdn="api."$cluster"."$domain_name
 
 create_iso() {
   cd $basedir
@@ -23,12 +29,11 @@ create_iso() {
     git clone git@github.com:borball/sno-agent-based-installer.git
   fi
 
-  cp $basedir/abi-configs/$cluster.yaml $sno_workspace/$cluster.yaml
   cd $sno_workspace
   if [ -d "instances/$cluster" ]; then
     rm -rf instances/$cluster
   fi
-  ./sno-iso.sh $cluster.yaml stable-4.18
+  ./sno-iso.sh $config_file stable-4.18
 
   cp $sno_workspace/instances/$cluster/agent.x86_64.iso $iso_dir/$cluster.iso
 

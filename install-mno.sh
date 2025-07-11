@@ -4,16 +4,22 @@ basedir="$(
   cd "$(dirname "$0")" >/dev/null 2>&1
   pwd -P
 )"
-mno_workspace=$basedir/mno-with-abi
-iso_dir=/var/www/html/iso
-web_server=http://192.168.58.15/iso
 
 cluster=$1
-
 if [ -z "$cluster" ]; then
   echo "Usage: $0 <cluster>"
   exit 1
 fi
+
+config_file=$basedir/abi-configs/$cluster.yaml
+if [ ! -f "$config_file" ]; then
+  echo "Config file $config_file for cluster $cluster not found, please check the config file in $basedir/abi-configs/"
+  exit 1
+fi
+
+mno_workspace=$basedir/mno-with-abi
+iso_dir=/var/www/html/iso
+web_server=http://192.168.58.15/iso
 
 create_iso() {
   cd $basedir
@@ -21,12 +27,11 @@ create_iso() {
     git clone git@github.com:borball/mno-with-abi.git
   fi
 
-  cp $basedir/abi-configs/$cluster.yaml $mno_workspace/$cluster.yaml
   cd $mno_workspace
   if [ -d "instances/$cluster" ]; then
     rm -rf instances/$cluster
   fi
-  ./mno-iso.sh $cluster.yaml stable-4.18
+  ./mno-iso.sh $config_file stable-4.18
 
   cp $mno_workspace/instances/$cluster/agent.x86_64.iso $iso_dir/$cluster.iso
 
