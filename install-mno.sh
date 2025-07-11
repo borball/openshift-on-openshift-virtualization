@@ -29,7 +29,19 @@ power_on_vms(){
     virtctl start master3 -n $cluster
 }
 
+#generate ISO with the cluster config and copy it to the web server
 create_iso
+
+#create the VMs, the VMs have the ISO mounted as a CDROM
 create_vms
+
+#power on the VMs so the ABI will start the installation
 power_on_vms
 
+#todo, monitor the installation 
+
+#todo, change the boot order of the VMs to boot from the disk at proper time
+
+#todo, wait for the cluster to be ready
+
+#todo, unmount the ISO from the VMs
