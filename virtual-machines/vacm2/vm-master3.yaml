@@ -2,15 +2,15 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   labels:
-    app: sno1
-  name: sno1
-  namespace: sno-clusters
+    app: master3
+  name: master3
+  namespace: vacm2
 spec:
   runStrategy: Halted
   dataVolumeTemplates:
     - kind: DataVolume
-      metadata: 
-        name: sno1-rootdisk
+      metadata:
+        name: master3-rootdisk
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
@@ -23,7 +23,7 @@ spec:
               storage: 120Gi
     - kind: DataVolume
       metadata:
-        name: sno1-data
+        name: master3-data
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
@@ -36,23 +36,22 @@ spec:
               storage: 100Gi
     - kind: DataVolume
       metadata:
-        name: sno1-cdrom
+        name: master3-cdroom
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           http:
-            url: http://192.168.58.15/iso/sno1.iso
+            url: http://192.168.58.15/iso/vacm2.iso
           size: 5Gi
         storage:
           resources:
             requests:
               storage: 5Gi
-
   template:
     metadata:
       labels:
-        kubevirt.io/domain: sno1
+        kubevirt.io/domain: master3
     spec:
       architecture: amd64
       domain:
@@ -74,12 +73,12 @@ spec:
               name: cdroom
               bootOrder: 1
           interfaces:
-            - bridge: {}
-              macAddress: de:ad:be:ff:20:30
+            - bridge: { }
+              macAddress: de:ad:be:ff:40:20
               model: virtio
               name: enp1s0
         memory:
-          guest: 24Gi
+          guest: 16Gi
       networks:
         - multus:
             networkName: localnet-network
@@ -87,13 +86,12 @@ spec:
       terminationGracePeriodSeconds: 180
       volumes:
         - dataVolume:
-            name: sno1-rootdisk
+            name: master3-rootdisk
           name: rootdisk
         - dataVolume:
-            name: sno1-data
+            name: master3-data
           name: data
         - dataVolume:
-            name: sno1-cdroom
+            name: master3-cdroom
           name: cdroom
-
 

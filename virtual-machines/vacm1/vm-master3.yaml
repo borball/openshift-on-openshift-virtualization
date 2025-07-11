@@ -4,19 +4,19 @@ metadata:
   labels:
     app: master3
   name: master3
-  namespace: vacm-hub2
+  namespace: vacm1
 spec:
   runStrategy: Halted
   dataVolumeTemplates:
     - kind: DataVolume
-      metadata:
+      metadata: 
         name: master3-rootdisk
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           blank: {}
-          size: 120Gi
+          size: 120Gi 
         storage:
           resources:
             requests:
@@ -42,7 +42,7 @@ spec:
       spec:
         source:
           http:
-            url: http://192.168.58.15/iso/vacm2.iso
+            url: http://192.168.58.15/iso/vacm1.iso
           size: 5Gi
         storage:
           resources:
@@ -73,8 +73,8 @@ spec:
               name: cdroom
               bootOrder: 1
           interfaces:
-            - bridge: { }
-              macAddress: de:ad:be:ff:40:20
+            - bridge: {}
+              macAddress: de:ad:be:ff:20:20
               model: virtio
               name: enp1s0
         memory:
@@ -94,4 +94,5 @@ spec:
         - dataVolume:
             name: master3-cdroom
           name: cdroom
+
 

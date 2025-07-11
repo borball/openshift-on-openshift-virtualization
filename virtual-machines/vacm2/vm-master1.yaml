@@ -4,7 +4,7 @@ metadata:
   labels:
     app: master1
   name: master1
-  namespace: vacm-hub1
+  namespace: vacm2
 spec:
   runStrategy: Halted
   dataVolumeTemplates:
@@ -16,12 +16,11 @@ spec:
       spec:
         source:
           blank: {}
-          size: 120Gi
+          size: 120Gi 
         storage:
           resources:
             requests:
               storage: 120Gi
-
     - kind: DataVolume
       metadata:
         name: master1-data
@@ -34,7 +33,7 @@ spec:
         storage:
           resources:
             requests:
-              storage: 100Gi 
+              storage: 100Gi
     - kind: DataVolume
       metadata:
         name: master1-cdroom
@@ -43,12 +42,12 @@ spec:
       spec:
         source:
           http:
-            url: http://192.168.58.15/iso/vacm1.iso
+            url: http://192.168.58.15/iso/vacm2.iso
+          size: 5Gi
         storage:
           resources:
             requests:
-              storage: 5Gi 
-
+              storage: 5Gi
   template:
     metadata:
       labels:
@@ -75,7 +74,7 @@ spec:
               bootOrder: 1
           interfaces:
             - bridge: { }
-              macAddress: de:ad:be:ff:20:00
+              macAddress: de:ad:be:ff:40:00
               model: virtio
               name: enp1s0
         memory:

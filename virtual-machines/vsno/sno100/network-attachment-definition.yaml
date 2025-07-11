@@ -2,7 +2,7 @@ apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:
   name: localnet-network
-  namespace: sno-clusters
+  namespace: sno100
 spec:
   config: |-
     {
@@ -10,5 +10,5 @@ spec:
       "name": "localnet-network", 
       "type": "ovn-k8s-cni-overlay", 
       "topology": "localnet", 
-      "netAttachDefName": "sno-clusters/localnet-network" 
+      "netAttachDefName": "sno100/localnet-network"  
     }

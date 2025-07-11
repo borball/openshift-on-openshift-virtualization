@@ -2,28 +2,28 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   labels:
-    app: master1
-  name: master1
-  namespace: vacm-hub2
+    app: sno100
+  name: sno100
+  namespace: sno100
 spec:
   runStrategy: Halted
   dataVolumeTemplates:
     - kind: DataVolume
-      metadata:
-        name: master1-rootdisk
+      metadata: 
+        name: sno100-rootdisk
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           blank: {}
-          size: 120Gi 
+          size: 120Gi
         storage:
           resources:
             requests:
               storage: 120Gi
     - kind: DataVolume
       metadata:
-        name: master1-data
+        name: sno100-data
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
@@ -36,22 +36,23 @@ spec:
               storage: 100Gi
     - kind: DataVolume
       metadata:
-        name: master1-cdroom
+        name: sno100-cdrom
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           http:
-            url: http://192.168.58.15/iso/vacm2.iso
+            url: http://192.168.58.15/iso/sno100.iso
           size: 5Gi
         storage:
           resources:
             requests:
               storage: 5Gi
+
   template:
     metadata:
       labels:
-        kubevirt.io/domain: master1
+        kubevirt.io/domain: sno100
     spec:
       architecture: amd64
       domain:
@@ -73,12 +74,12 @@ spec:
               name: cdroom
               bootOrder: 1
           interfaces:
-            - bridge: { }
-              macAddress: de:ad:be:ff:40:00
+            - bridge: {}
+              macAddress: de:ad:be:ff:20:30
               model: virtio
               name: enp1s0
         memory:
-          guest: 16Gi
+          guest: 24Gi
       networks:
         - multus:
             networkName: localnet-network
@@ -86,13 +87,13 @@ spec:
       terminationGracePeriodSeconds: 180
       volumes:
         - dataVolume:
-            name: master1-rootdisk
+            name: sno100-rootdisk
           name: rootdisk
         - dataVolume:
-            name: master1-data
+            name: sno100-data
           name: data
         - dataVolume:
-            name: master1-cdroom
+            name: sno100-cdroom
           name: cdroom
 
 

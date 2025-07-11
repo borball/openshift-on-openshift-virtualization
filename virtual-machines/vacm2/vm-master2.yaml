@@ -2,28 +2,28 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   labels:
-    app: master3
-  name: master3
-  namespace: vacm-hub1
+    app: master2
+  name: master2
+  namespace: vacm2
 spec:
   runStrategy: Halted
   dataVolumeTemplates:
-    - kind: DataVolume
-      metadata: 
-        name: master3-rootdisk
+    - kind: DataVolume  
+      metadata:
+        name: master2-rootdisk  
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           blank: {}
-          size: 120Gi 
+          size: 120Gi
         storage:
           resources:
             requests:
               storage: 120Gi
     - kind: DataVolume
-      metadata:
-        name: master3-data
+      metadata: 
+        name: master2-data
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
@@ -36,13 +36,13 @@ spec:
               storage: 100Gi
     - kind: DataVolume
       metadata:
-        name: master3-cdroom
+        name: master2-cdroom
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
         source:
           http:
-            url: http://192.168.58.15/iso/vacm1.iso
+            url: http://192.168.58.15/iso/vacm2.iso
           size: 5Gi
         storage:
           resources:
@@ -51,7 +51,7 @@ spec:
   template:
     metadata:
       labels:
-        kubevirt.io/domain: master3
+        kubevirt.io/domain: master2
     spec:
       architecture: amd64
       domain:
@@ -73,8 +73,8 @@ spec:
               name: cdroom
               bootOrder: 1
           interfaces:
-            - bridge: {}
-              macAddress: de:ad:be:ff:20:20
+            - bridge: { }
+              macAddress: de:ad:be:ff:40:10
               model: virtio
               name: enp1s0
         memory:
@@ -86,13 +86,12 @@ spec:
       terminationGracePeriodSeconds: 180
       volumes:
         - dataVolume:
-            name: master3-rootdisk
+            name: master2-rootdisk
           name: rootdisk
         - dataVolume:
-            name: master3-data
+            name: master2-data
           name: data
         - dataVolume:
-            name: master3-cdroom
+            name: master2-cdroom
           name: cdroom
-
 

@@ -4,7 +4,7 @@ metadata:
   labels:
     app: master2
   name: master2
-  namespace: vacm-hub1
+  namespace: vacm1
 spec:
   runStrategy: Halted
   dataVolumeTemplates:

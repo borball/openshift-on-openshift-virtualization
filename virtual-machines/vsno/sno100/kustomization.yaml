@@ -3,4 +3,4 @@ kind: Kustomization
 resources:
   - ns.yaml
   - network-attachment-definition.yaml
-  - vm-sno1.yaml
+  - vm-sno100.yaml
