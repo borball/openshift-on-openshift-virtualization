@@ -473,3 +473,156 @@ topology-aware-lifecycle-manager.v4.18.0   Topology Aware Lifecycle Manager     
 
 
 ### SNO
+
+```
+# ./install-sno.sh sno100
+Creating workspace: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100.
+Will use /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/config-resolved.yaml as the configuration in other sno-* scripts.
+You are going to download OpenShift installer stable-4.18: 4.18.19
+
+Enabling day1 configuration...
+Workload partitioning:                                   enabled(through install-config)
+SNO boot accelerate:                                     enabled
+kdump, blacklist_ice(for HPE):                           disabled
+Container runtime crun(4.18+):                           default
+SR-IOV kernel(intel iommu):                              enabled
+- 07-sriov-related-kernel-args-master.intel.yaml         added
+Set rcu_normal=1 after node reboot:                      enabled
+Sync time once after node reboot:                        enabled
+default cgv2, enable cgroup v1:                          false
+Container storage partition:                             disabled
+
+Enabling operators...
+PTP Operator                                             enabled
+Local Storage Operator                                   enabled
+Red Hat Advanced Cluster Management for Kubernetes       disabled
+Red Hat OpenShift GitOps                                 disabled
+Topology Aware Lifecycle Manager                         disabled
+SR-IOV Network Operator for Openshift                    enabled
+Logical Volume Manager Storage Operator                  disabled
+Multicluster Engine for Kubernetes                       disabled
+Multicluster Global Hub Operator                         disabled
+OpenShift Logging Operator                               disabled
+Intel SRIOV-FEC Operator                                 disabled
+OpenShift API for Data Protection Operator               disabled
+OpenShift Lifecycle Agent Operator                       disabled
+MetalLB Operator                                         disabled
+NMState Operator                                         disabled
+OpenShift Virtualization                                 disabled
+Node Feature Discovery Operator                          disabled
+NVIDIA GPU Operator                                      disabled
+
+Configuring operators...
+
+
+Generating boot image...
+
+INFO Configuration has 1 master replicas and 0 worker replicas
+INFO The rendezvous host IP (node0 IP) is 192.168.58.100
+INFO Extracting base ISO from release payload
+INFO Verifying cached file
+INFO Using cached Base ISO /root/.cache/agent/image_cache/coreos-x86_64.iso
+INFO Consuming Extra Manifests from target directory
+INFO Consuming Install Config from target directory
+INFO Consuming Agent Config from target directory
+INFO Generated ISO at /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/agent.x86_64.iso.
+
+------------------------------------------------
+kubeconfig: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/auth/kubeconfig.
+kubeadmin password: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/auth/kubeadmin-password.
+------------------------------------------------
+
+Next step: Go to your BMC console and boot the node from ISO: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/agent.x86_64.iso.
+You can also run ./sno-install.sh to boot the node from the image automatically if you have a HTTP server serves the image.
+Enjoy!
+ISO created and copied to /var/www/html/iso/sno100.iso, which is served by the web server http://192.168.58.15/iso
+
+Creating the VM...
+namespace/sno100 unchanged
+networkattachmentdefinition.k8s.cni.cncf.io/localnet-network unchanged
+virtualmachine.kubevirt.io/sno100 created
+
+Waiting for the VM being ready to power on...
+Waiting for the VM's DataVolume to be created...
+datavolume.cdi.kubevirt.io/sno100-cdrom phase ImportScheduled is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-cdrom DataVolume to be and succeed...
+datavolume.cdi.kubevirt.io/sno100-data phase null is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-data DataVolume to be and succeed...
+datavolume.cdi.kubevirt.io/sno100-rootdisk phase ImportScheduled is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-rootdisk DataVolume to be and succeed...
+datavolume.cdi.kubevirt.io/sno100-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-cdrom DataVolume to be and succeed...
+datavolume.cdi.kubevirt.io/sno100-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-cdrom DataVolume to be and succeed...
+The VM is ready to power on.
+
+Powering on the VM to start the installation.
+VM sno100 was scheduled to start
+
+Monitoring the installation...
+Fetching the API token...
+API token: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3NjaGVtZSI6InVzZXJBdXRoIn0.akDrPTcC7gfJ422uArBI5NWpbeztNgByjTy_uznkSf5LJcZVRPedIzwv1o4d8HlLB7UqWCAiaK-oQCdDOZiY1A
+
+Fetching the Assisted REST URL...
+Assisted REST URL: http://api.sno100.outbound.vz.bos2.lab:8090/api/assisted-install/v2/clusters
+
+......
+Installing in progress...
+-------------------------------
+{"enabled_host_count":1,"name":"sno100","status":"insufficient","status_info":"Cluster is not ready for install","status_updated_at":"2025-07-11T22:05:12.273Z","total_host_count":1,"updated_at":"2025-07-11T22:05:12.566566Z","user_name":"admin"}
+-------------------------------
+{"enabled_host_count":1,"name":"sno100","status":"insufficient","status_info":"Cluster is not ready for install","status_updated_at":"2025-07-11T22:05:12.273Z","total_host_count":1,"updated_at":"2025-07-11T22:05:17.882968Z","user_name":"admin","validations_info":{"configuration":[{"status":"success","message":"Platform requirements satisfied"},{"status":"success","message":"The pull secret is set."}],"hosts-data":[{"status":"failure","message":"The cluster has hosts that are not ready to install."},{"status":"success","message":"The cluster has the exact amount of dedicated control plane nodes."}],"network":[{"status":"success","message":"API virtual IPs are not required: User Managed Networking"},{"status":"success","message":"API virtual IPs are not required: User Managed Networking"},{"status":"success","message":"The Cluster Network CIDR is defined."},{"status":"success","message":"The base domain is defined."},{"status":"success","message":"Ingress virtual IPs are not required: User Managed Networking"},{"status":"success","message":"Ingress virtual IPs are not required: User Managed Networking"},{"status":"success","message":"The Machine Network CIDR is defined."},{"status":"success","message":"The Cluster Machine CIDR is not required: User Managed Networking"},{"status":"success","message":"The Cluster Network prefix is valid."},{"status":"success","message":"The cluster has a valid network type"},{"status":"success","message":"Same address families for all networks."},{"status":"success","message":"No CIDRS are overlapping."},{"status":"success","message":"No ntp problems found"},{"status":"success","message":"The Service Network CIDR is defined."}],"operators":[{"status":"success","message":"cnv is disabled"},{"status":"success","message":"lso is disabled"},{"status":"success","message":"lvm is disabled"},{"status":"success","message":"mce is disabled"},{"status":"success","message":"mtv is disabled"},{"status":"success","message":"node-feature-discovery is disabled"},{"status":"success","message":"nvidia-gpu is disabled"},{"status":"success","message":"odf is disabled"},{"status":"success","message":"openshift-ai is disabled"},{"status":"success","message":"pipelines is disabled"},{"status":"success","message":"serverless is disabled"},{"status":"success","message":"servicemesh is disabled"}]}}
+
+Installation in progress: completed 10/100
+Installation in progress: completed 39/100........
+Installation in progress: completed 49/100....
+-------------------------------
+Node Rebooted...
+Waiting for the cluster to be stable...
+failed to list clusteroperators: Get "https://api.sno100.outbound.vz.bos2.lab:6443/apis/config.openshift.io/v1/clusteroperators": dial tcp 192.168.58.100:6443: connect: connection refused
+............................................
+clusteroperators/authentication is still unavailable and progressing and degraded after 20s
+...........................................................................................................................................
+clusteroperators/authentication is still unavailable and progressing and degraded after 1m30s
+..........................................................................................................................................
+clusteroperators/authentication is still unavailable and degraded after 14m50s
+....
+clusteroperators/monitoring is still unavailable and progressing and degraded after 26m20s
+.......
+clusteroperators/kube-controller-manager is still progressing after 20s
+.......
+All clusteroperators are still stable after 30s
+....
+All clusteroperators are stable
+Virtualization cluster info:
+--------------------------------
+NAME                          STATUS   ROLES                         AGE   VERSION
+sno100.outbound.vz.bos2.lab   Ready    control-plane,master,worker   28m   v1.31.9
+--------------------------------
+NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
+version   4.18.19   True        False         107s    Cluster version is 4.18.19
+--------------------------------
+NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+authentication                             4.18.19   True        False         False      3m21s
+config-operator                            4.18.19   True        False         False      26m
+dns                                        4.18.19   True        False         False      7m18s
+etcd                                       4.18.19   True        False         False      14m
+ingress                                    4.18.19   True        False         False      26m
+kube-apiserver                             4.18.19   True        False         False      7m25s
+kube-controller-manager                    4.18.19   True        False         False      13m
+kube-scheduler                             4.18.19   True        False         False      13m
+kube-storage-version-migrator              4.18.19   True        False         False      26m
+machine-approver                           4.18.19   True        False         False      26m
+machine-config                             4.18.19   True        False         False      26m
+monitoring                                 4.18.19   True        False         False      2m5s
+network                                    4.18.19   True        False         False      26m
+node-tuning                                4.18.19   True        False         False      26m
+openshift-apiserver                        4.18.19   True        False         False      7m24s
+openshift-controller-manager               4.18.19   True        False         False      15m
+operator-lifecycle-manager                 4.18.19   True        False         False      20m
+operator-lifecycle-manager-catalog         4.18.19   True        False         False      20m
+operator-lifecycle-manager-packageserver   4.18.19   True        False         False      7m33s
+service-ca                                 4.18.19   True        False         False      26m
+--------------------------------
+NAME                                          DISPLAY                   VERSION
+local-storage-operator.v4.18.0-202506241202   Local Storage             4.18.0-202506241202
+packageserver                                 Package Server            0.0.1-snapshot
+ptp-operator.v4.18.0-202506260833             PTP Operator              4.18.0-202506260833
+sriov-network-operator.v4.18.0-202506230505   SR-IOV Network Operator   4.18.0-202506230505
+
+```
