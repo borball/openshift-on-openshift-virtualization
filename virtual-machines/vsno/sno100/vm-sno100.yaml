@@ -43,7 +43,6 @@ spec:
         source:
           http:
             url: http://192.168.58.15/iso/sno100.iso
-          size: 5Gi
         storage:
           resources:
             requests:
@@ -71,7 +70,7 @@ spec:
               name: data
             - cdrom:
                 bus: scsi
-              name: cdroom
+              name: cdrom
               bootOrder: 2
           interfaces:
             - bridge: {}
@@ -93,7 +92,7 @@ spec:
             name: sno100-data
           name: data
         - dataVolume:
-            name: sno100-cdroom
-          name: cdroom
+            name: sno100-cdrom
+          name: cdrom
 
 

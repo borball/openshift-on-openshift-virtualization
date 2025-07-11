@@ -36,7 +36,7 @@ spec:
               storage: 100Gi 
     - kind: DataVolume
       metadata:
-        name: master1-cdroom
+        name: master1-cdrom
         annotations:
           cdi.kubevirt.io/storage.bind.immediate.requested: "true"
       spec:
@@ -70,7 +70,7 @@ spec:
               name: data
             - cdrom:
                 bus: scsi
-              name: cdroom
+              name: cdrom
               bootOrder: 2
           interfaces:
             - bridge: { }
@@ -92,7 +92,7 @@ spec:
             name: master1-data
           name: data
         - dataVolume:
-            name: master1-cdroom
-          name: cdroom
+            name: master1-cdrom
+          name: cdrom
 
 
