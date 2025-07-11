@@ -123,8 +123,6 @@ monitor_installation(){
 
     REMOTE_CURL+=" --noproxy ${rendezvousIP} -H 'Authorization: ${api_token}'"
 
-    echo $REMOTE_CURL
-
     while [[ "$($REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" != "200" ]]; do
     echo -n "."
     sleep 10;
