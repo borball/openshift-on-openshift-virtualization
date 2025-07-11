@@ -82,11 +82,12 @@ vm_ready_to_power_on() {
     fi
   done
   if $done; then
-    echo "All the VMs are ready to power on."
+    echo "The VM is ready to power on."
   else
-    echo "Some of the VMs are not ready to power on, please check the DataVolumes' phase."
+    echo "The VM is not ready to power on, please check the DataVolumes' phase."
     exit 1
   fi
+  echo
 }
 
 power_on_vm() {
@@ -114,6 +115,11 @@ fetch_assisted_rest_url() {
 }
 
 monitor_installation() {
+  echo "Monitoring the installation..."
+  SECONDS=0
+  fetch_api_token
+  fetch_assisted_rest_url
+
   SSH_CMD="ssh -q -oStrictHostKeyChecking=no"
   ssh_priv_key_input=$(yq -r '.ssh_priv_key //""' $config_file)
   if [[ ! -z "${ssh_priv_key_input}" ]]; then

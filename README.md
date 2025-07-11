@@ -313,6 +313,8 @@ ssh core@<rendezvous-ip> journalctl -u assisted-service
 
 ## Execution Example
 
+### MNO
+
 ```
 # ./install-mno.sh vacm2
 Will use /root/github/openshift-on-openshift-virtualization/mno-with-abi/instances/vacm2/config-resolved.yaml as the configuration in other mno-* scripts.
@@ -470,3 +472,4 @@ topology-aware-lifecycle-manager.v4.18.0   Topology Aware Lifecycle Manager     
 ```
 
 
+### SNO
