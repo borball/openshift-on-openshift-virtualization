@@ -75,7 +75,7 @@ spec:
               bootOrder: 2
           interfaces:
             - bridge: {}
-              macAddress: de:ad:be:ff:20:30
+              macAddress: de:ad:be:aa:00:00
               model: virtio
               name: enp1s0
         memory:
