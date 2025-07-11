@@ -3,6 +3,7 @@
 basedir="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 mno_workspace=$basedir/mno-with-abi
 iso_dir=/var/www/html/iso
+web_server=http://192.168.58.15/iso
 
 cluster=$1
 
@@ -25,10 +26,15 @@ create_iso(){
     ./mno-iso.sh $cluster.yaml stable-4.18
 
     cp $mno_workspace/instances/$cluster/agent.x86_64.iso $iso_dir/$cluster.iso
+
+    echo "ISO created and copied to $iso_dir/$cluster.iso, which is served by the web server $web_server"
+    echo
 }
 
 create_vms(){
+    echo "Creating the VMs..."
     oc apply -k $basedir/virtual-machines/$cluster
+    echo
 }
 
 vms_ready_to_power_on(){
@@ -54,6 +60,23 @@ vms_ready_to_power_on(){
         break
     fi
     done
+
+    done=true
+    for dv in $(oc get dv -n $cluster -o name); do
+        phase=$(oc get -n $cluster $dv -o yaml |yq '.status.phase')
+        if [[ "$phase" != "Succeeded" ]]; then
+            echo "$dv phase $phase is not Succeeded yet; Waiting for the $dv DataVolume to be and succeed..."
+            sleep 5
+            timeout=$((timeout-1))
+            done=false
+        fi
+    done
+    if $done; then
+        echo "All the VMs are ready to power on."
+    else
+        echo "Some of the VMs are not ready to power on, please check the DataVolumes' phase."
+        exit 1
+    fi
 }
 
 power_on_vms(){
@@ -61,6 +84,7 @@ power_on_vms(){
     for vm in "master1" "master2" "master3"; do
         virtctl start $vm -n $cluster
     done
+    echo
 }
 
 fetch_api_token(){
@@ -69,6 +93,8 @@ fetch_api_token(){
     if [[ -z "${api_token}" ]]; then
         api_token=$(jq -r '.["*gencrypto.AuthConfig"].AgentAuthToken // empty' $mno_workspace/instances/$cluster/.openshift_install_state.json)
     fi
+    echo "API token: $api_token"
+    echo
 }
 
 fetch_assisted_rest_url(){
@@ -82,6 +108,8 @@ fetch_assisted_rest_url(){
         rendezvousIP=$(yq '.hosts.masters[0].ipv6.ip' $config_file)
         assisted_rest=http://[$rendezvousIP]:8090/api/assisted-install/v2/clusters
     fi
+    echo "Assisted REST URL: $assisted_rest"
+    echo
 }
 
 monitor_installation(){
@@ -139,6 +167,7 @@ monitor_installation(){
 }
 
 wait_for_stable_cluster(){
+    echo "Waiting for the cluster to be stable..."
     export KUBECONFIG=$mno_workspace/instances/$cluster/auth/kubeconfig
 
     echo "Waiting for the cluster to be stable..."
@@ -184,20 +213,10 @@ print_cluster_info(){
     oc get csv -A -o custom-columns="0AME:.metadata.name,DISPLAY:.spec.displayName,VERSION:.spec.version" |sort -f|uniq|sed s/0AME/NAME/
 }
 
-#generate ISO with the cluster config and copy it to the web server
 create_iso
-
-#create the VMs, the VMs have the ISO mounted as a CDROM
 create_vms
-
 vms_ready_to_power_on
-
-sleep 30
 power_on_vms
-sleep 30
-
 monitor_installation
-
 wait_for_stable_cluster 60
-
 print_cluster_info
