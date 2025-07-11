@@ -2,6 +2,7 @@
 
 basedir="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 mno_workspace=$basedir/mno-with-abi
+iso_dir=/var/www/html/iso
 
 cluster=$1
 
@@ -16,32 +17,63 @@ create_iso(){
         git clone git@github.com:borball/mno-with-abi.git
     fi
 
-    cp abi-configs/$cluster.yaml mno-with-abi/$cluster.yaml
-    cd mno-with-abi
+    cp $basedir/abi-configs/$cluster.yaml $mno_workspace/$cluster.yaml
+    cd $mno_workspace
+    if [ -d "instances/$cluster" ]; then
+        rm -rf instances/$cluster
+    fi
     ./mno-iso.sh $cluster.yaml stable-4.18
 
-    cp instances/$cluster/agent.x86_64.iso /var/www/html/iso/$cluster.iso
+    cp $mno_workspace/instances/$cluster/agent.x86_64.iso $iso_dir/$cluster.iso
 }
 
 create_vms(){
     oc apply -k $basedir/virtual-machines/$cluster
 }
 
-power_on_vms(){
-    oc get vmi -n $cluster
-    virtctl start master1 -n $cluster
-    virtctl start master2 -n $cluster
-    virtctl start master3 -n $cluster
+vms_ready_to_power_on(){
+    echo "Waiting for all the VMs being ready..."
+    while [[ $(oc get dv -n $cluster |wc -l) -ne 10 ]]; do
+        echo "Waiting for the VMs' DataVolumes to be created..."
+        sleep 1
+    done
+
+    timeout=120
+    while [[ $timeout -gt 0 ]]; do
+    success=true
+    for dv in $(oc get dv -n $cluster -o name); do
+        phase=$(oc get -n $cluster $dv -o yaml |yq '.status.phase')
+        if [[ "$phase" != "Succeeded" ]]; then
+            echo "$dv phase $phase is not Succeeded yet; Waiting for the $dv DataVolume to be and succeed..."
+            sleep 5
+            timeout=$((timeout-1))
+            success=false
+        fi
+    done
+    if $success; then
+        break
+    fi
+    done
 }
 
-monitor_installation(){
-    SECONDS=0
-    api_token=$(jq -r '.["*gencrypto.AuthConfig"].UserAuthToken // empty' instances/$cluster/.openshift_install_state.json)
-    if [[ -z "${api_token}" ]]; then
-        api_token=$(jq -r '.["*gencrypto.AuthConfig"].AgentAuthToken // empty' instances/$cluster/.openshift_install_state.json)
-    fi
+power_on_vms(){
+    echo "Powering on the VMs to start the installation."
+    for vm in "master1" "master2" "master3"; do
+        virtctl start $vm -n $cluster
+    done
+}
 
-    config_file=$basedir/abi-configs/$cluster.yaml
+fetch_api_token(){
+    echo "Fetching the API token..."
+    api_token=$(jq -r '.["*gencrypto.AuthConfig"].UserAuthToken // empty' $mno_workspace/instances/$cluster/.openshift_install_state.json)
+    if [[ -z "${api_token}" ]]; then
+        api_token=$(jq -r '.["*gencrypto.AuthConfig"].AgentAuthToken // empty' $mno_workspace/instances/$cluster/.openshift_install_state.json)
+    fi
+}
+
+fetch_assisted_rest_url(){
+    echo "Fetching the Assisted REST URL..."
+    config_file=$mno_workspace/$cluster.yaml
     ipv4_enabled=$(yq '.hosts.common.ipv4.enabled // "" ' $config_file)
     if [ "true" = "$ipv4_enabled" ]; then
         rendezvousIP=$(yq '.hosts.masters[0].ipv4.ip' $config_file)
@@ -50,53 +82,64 @@ monitor_installation(){
         rendezvousIP=$(yq '.hosts.masters[0].ipv6.ip' $config_file)
         assisted_rest=http://[$rendezvousIP]:8090/api/assisted-install/v2/clusters
     fi
+}
 
-    CURL="curl -s --noproxy $rendezvousIP -H 'Authorization: Bearer $api_token'"
+monitor_installation(){
+    echo "Monitoring the installation..."
+    SECONDS=0
+    fetch_api_token
+    fetch_assisted_rest_url
 
-    echo ""
-    echo "-------------------------------"
+    SSH_CMD="ssh -q -oStrictHostKeyChecking=no"
+    REMOTE_CURL="$SSH_CMD core@$rendezvousIP curl -s"
 
-    while [[ "$($CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" != "200" ]]; do
-        echo -n "."
-        sleep 10;
+    REMOTE_CURL+=" --noproxy ${rendezvousIP} -H 'Authorization: ${api_token}'"
+
+    echo $REMOTE_CURL
+
+    while [[ "$($REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" != "200" ]]; do
+    echo -n "."
+    sleep 10;
     done
 
     echo
     echo "Installing in progress..."
     while 
-        echo "-------------------------------"
-        _status=$($CURL $assisted_rest)
-        echo "$_status"| \
-        jq -c '.[] | with_entries(select(.key | contains("name","updated_at","_count","status","validations_info")))|.validations_info|=(.// empty|fromjson|del(.. | .id?))'
-        [[ "\"installing\"" != $(echo "$_status" |jq '.[].status') ]]
+    echo "-------------------------------"
+    _status=$($REMOTE_CURL $assisted_rest)
+    echo "$_status"| \
+    jq -c '.[] | with_entries(select(.key | contains("name","updated_at","_count","status","validations_info")))|.validations_info|=(.// empty|fromjson|del(.. | .id?))'
+    [[ "\"installing\"" != $(echo "$_status" |jq '.[].status') ]]
     do sleep 15; done
 
     echo
     prev_percentage=""
     echo "-------------------------------"
     while
-        total_percentage=$($CURL $assisted_rest |jq '.[].progress.total_percentage')
-        if [ ! -z $total_percentage ]; then
-            if [[ "$total_percentage" == "$prev_percentage" ]]; then
-            echo -n "."
-            else
-            echo
-            echo -n "Installation in progress: completed $total_percentage/100"
-            prev_percentage=$total_percentage
-            fi
+    total_percentage=$($REMOTE_CURL $assisted_rest |jq '.[].progress.total_percentage')
+    if [ ! -z $total_percentage ]; then
+        if [[ "$total_percentage" == "$prev_percentage" ]]; then
+        echo -n "."
+        else
+        echo
+        echo -n "Installation in progress: completed $total_percentage/100"
+        prev_percentage=$total_percentage
         fi
-        sleep 20;
-        [[ "$($CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" == "200" ]]
+    fi
+    sleep 20;
+    [[ "$($REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" == "200" ]]
     do true; done
     echo
 
     echo "-------------------------------"
     echo "Nodes Rebooted..."
+
     duration=$SECONDS
     echo "$((duration / 60)) minutes and $((duration % 60)) seconds elapsed."
 }
 
 wait_for_stable_cluster(){
+    echo "Waiting for the cluster to be stable..."
     local interval=${1:-60}
     local next_run=0
     local skipped=""
@@ -133,18 +176,17 @@ create_iso
 #create the VMs, the VMs have the ISO mounted as a CDROM
 create_vms
 
-#power on the VMs so the ABI will start the installation
-#power_on_vms
+vms_ready_to_power_on
 
+sleep 30
+power_on_vms
+sleep 30
 
 #todo, monitor the installation
-#monitor_installation
-
-
-#todo, change the boot order of the VMs to boot from the disk at proper time
+monitor_installation
 
 #todo, wait for the cluster to be ready
-#wait_for_stable_cluster 60
+wait_for_stable_cluster 60
 
 #todo, unmount the ISO from the VMs
 #unmount_iso_from_vms
