@@ -5,6 +5,32 @@ basedir="$(
   pwd -P
 )"
 
+#check if required software is installed
+if ! command -v yq &> /dev/null; then
+  echo "yq could not be found, please install it"
+  exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+  echo "jq could not be found, please install it"
+  exit 1
+fi
+
+if ! command -v oc &> /dev/null; then
+  echo "oc could not be found, please install it"
+  exit 1
+fi
+
+if ! command -v virtctl &> /dev/null; then  
+  echo "virtctl could not be found, please install it"
+  exit 1
+fi
+
+if ! command -v git &> /dev/null; then
+  echo "git could not be found, please install it"
+  exit 1
+fi
+
 cluster=$1
 if [ -z "$cluster" ]; then
   echo "Usage: $0 <cluster>"
