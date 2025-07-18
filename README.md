@@ -167,10 +167,13 @@ This script:
 5. Creates the VM using Kustomize
 6. Powers on the VM using `virtctl`
 
-**Note**: The current script includes TODO items for future enhancements:
-- Monitor the installation progress
-- Change VM boot order to boot from disk after installation
-- Wait for cluster to be ready
+**Features**:
+- **Installation monitoring**: Tracks installation progress via Assisted Service API
+- **Cluster readiness**: Waits for cluster operators to reach stable state
+- **Progress reporting**: Shows installation percentage and status updates
+- **Error handling**: Includes timeout and retry mechanisms
+
+**Remaining TODO items for future enhancements**:
 - Unmount the ISO from the VM
 
 ### 3. Deploy Multi Node OpenShift (MNO)
