@@ -47,6 +47,8 @@ day1:
       enabled: true
     odf:
       enabled: true
+    gitops:
+      enabled: true
 
 day2:
 
