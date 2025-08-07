@@ -133,7 +133,6 @@ fetch_api_token() {
 
 fetch_assisted_rest_url() {
   echo "Fetching the Assisted REST URL..."
-  config_file=$mno_workspace/$cluster.yaml
   ipv4_enabled=$(yq '.hosts.common.ipv4.enabled // "" ' $config_file)
   if [ "true" = "$ipv4_enabled" ]; then
     rendezvousIP=$(yq '.hosts.masters[0].ipv4.ip' $config_file)
