@@ -151,9 +151,7 @@ monitor_installation() {
   fetch_api_token
   fetch_assisted_rest_url
 
-  SSH_CMD="ssh -q -oStrictHostKeyChecking=no"
-  REMOTE_CURL="$SSH_CMD core@$rendezvousIP curl -s"
-
+  REMOTE_CURL="curl -s"
   REMOTE_CURL+=" --noproxy ${rendezvousIP} -H 'Authorization: ${api_token}'"
 
   while [[ "$($REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" != "200" ]]; do
