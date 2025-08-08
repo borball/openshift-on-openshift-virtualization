@@ -151,10 +151,9 @@ monitor_installation() {
   fetch_api_token
   fetch_assisted_rest_url
 
-  REMOTE_CURL="curl -s"
-  REMOTE_CURL+=" --noproxy ${rendezvousIP} -H 'Authorization: ${api_token}'"
-
-  while [[ "$($REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" != "200" ]]; do
+  REMOTE_CURL="curl -s --noproxy ${rendezvousIP}"
+  REMOTE_CURL+=" -H \"Authorization: ${api_token}\""
+  while [[ "$(eval $REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" != "200" ]]; do
     echo -n "."
     sleep 10
   done
@@ -163,7 +162,7 @@ monitor_installation() {
   echo "Installing in progress..."
   while
     echo "-------------------------------"
-    _status=$($REMOTE_CURL $assisted_rest)
+    _status=$(eval $REMOTE_CURL $assisted_rest)
     echo "$_status" |
       jq -c '.[] | with_entries(select(.key | contains("name","updated_at","_count","status","validations_info")))|.validations_info|=(.// empty|fromjson|del(.. | .id?))'
     [[ "\"installing\"" != $(echo "$_status" | jq '.[].status') ]]
@@ -173,7 +172,7 @@ monitor_installation() {
   prev_percentage=""
   echo "-------------------------------"
   while
-    total_percentage=$($REMOTE_CURL $assisted_rest | jq '.[].progress.total_percentage')
+    total_percentage=$(eval $REMOTE_CURL $assisted_rest | jq '.[].progress.total_percentage')
     if [ ! -z $total_percentage ]; then
       if [[ "$total_percentage" == "$prev_percentage" ]]; then
         echo -n "."
@@ -184,7 +183,7 @@ monitor_installation() {
       fi
     fi
     sleep 20
-    [[ "$($REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" == "200" ]]
+    [[ "$(eval $REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" == "200" ]]
   do true; done
   echo
 
