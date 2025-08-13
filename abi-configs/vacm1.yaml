@@ -3,8 +3,10 @@ cluster:
   name: vacm1
   apiVIPs:
     - 192.168.58.50
+    - 2600:52:7:58::50
   ingressVIPs:
     - 192.168.58.54
+    - 2600:52:7:58::54
 
 hosts:
   common:
@@ -16,8 +18,12 @@ hosts:
       dns: 192.168.58.15
       gateway: 192.168.58.1
     ipv6:
-      enabled: false
+      enabled: true
       dhcp: false
+      machine_network_cidr: 2600:52:7:58::/64
+      machine_network_prefix: 64
+      dns: 2600:52:7:58::15
+      gateway: 2600:52:7:58::1
     vlan:
       enabled: false
     disk: /dev/vda
@@ -28,16 +34,22 @@ hosts:
       mac: de:ad:be:ff:20:00
       ipv4:
         ip: 192.168.58.51
+      ipv6:
+        ip: 2600:52:7:58::51
     - hostname: master2.vacm1.outbound.vz.bos2.lab
       interface: ens1f0
       mac: de:ad:be:ff:20:10
       ipv4:
         ip: 192.168.58.52
+      ipv6:
+        ip: 2600:52:7:58::52
     - hostname: master3.vacm1.outbound.vz.bos2.lab
       interface: ens1f0
       mac: de:ad:be:ff:20:20
       ipv4:
         ip: 192.168.58.53
+      ipv6:
+        ip: 2600:52:7:58::53
 
 day1:
   operators:
