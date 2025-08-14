@@ -154,6 +154,7 @@ monitor_installation() {
   REMOTE_CURL="curl -s --noproxy ${rendezvousIP}"
   REMOTE_CURL+=" -H \"Authorization: ${api_token}\""
   while [[ "$(eval $REMOTE_CURL -o /dev/null -w ''%{http_code}'' $assisted_rest)" != "200" ]]; do
+    $REMOTE_CURL $assisted_rest >> $basedir/logs/$cluster.log
     echo -n "."
     sleep 10
   done
@@ -162,6 +163,7 @@ monitor_installation() {
   echo "Installing in progress..."
   while
     echo "-------------------------------"
+    $REMOTE_CURL $assisted_rest >> $basedir/logs/$cluster.log
     _status=$(eval $REMOTE_CURL $assisted_rest)
     echo "$_status" |
       jq -c '.[] | with_entries(select(.key | contains("name","updated_at","_count","status","validations_info")))|.validations_info|=(.// empty|fromjson|del(.. | .id?))'
@@ -172,6 +174,7 @@ monitor_installation() {
   prev_percentage=""
   echo "-------------------------------"
   while
+    $REMOTE_CURL $assisted_rest >> $basedir/logs/$cluster.log
     total_percentage=$(eval $REMOTE_CURL $assisted_rest | jq '.[].progress.total_percentage')
     if [ ! -z $total_percentage ]; then
       if [[ "$total_percentage" == "$prev_percentage" ]]; then
