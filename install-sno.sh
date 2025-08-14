@@ -225,6 +225,16 @@ wait_for_stable_cluster(){
   fi
 }
 
+approve_pending_install_plans(){
+  echo "Approve pending approval InstallPlans if have, will repeat 5 times."
+  for i in {1..5}; do
+    echo "checking $i"
+    oc get ip -A
+    while read -s IP; do
+      echo "oc patch $IP --type merge --patch '{"spec":{"approved":true}}'"
+      oc patch $IP --type merge --patch '{"spec":{"approved":true}}'
+    done < <(oc get sub -A -o json |
+      jq -r '.items[]|select( (.spec.startingCSV != null) and (.status.installedCSV == null) and (.status.installPlanRef != null) )|.status.installPlanRef|"-n \(.namespace) ip \(.name)"')
 print_cluster_info() {
   echo "Virtualization cluster info:"
   echo "--------------------------------"
@@ -243,4 +253,5 @@ vm_ready_to_power_on
 power_on_vm
 monitor_installation
 wait_for_stable_cluster 60
+approve_pending_install_plans
 print_cluster_info
