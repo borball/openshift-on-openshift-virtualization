@@ -18,12 +18,24 @@ openshift-on-openshift-virtualization/
 ├── install-mno.sh                      # MNO installation script
 ├── abi-configs/                        # Agent Based Installer configurations
 │   ├── sno100.yaml                     # SNO cluster configuration
-│   ├── vacm1.yaml                      # MNO cluster configuration (vacm1)
-│   └── vacm2.yaml                      # MNO cluster configuration (vacm2)
+│   ├── vacm1.yaml                      # MNO dual-stack cluster configuration (vacm1)
+│   ├── vacm2.yaml                      # MNO single IPv4 cluster configuration (vacm2)
+│   └── extra-manifests/                # Day2 operations manifests
+│       ├── vacm1/                      # VACM1 day2 configurations
+│       │   └── day2/
+│       │       ├── local-storage/      # Local storage configuration
+│       │       ├── odf/                # OpenShift Data Foundation
+│       │       └── rhacm/              # Red Hat Advanced Cluster Management
+│       └── vacm2/                      # VACM2 day2 configurations
+│           └── day2/                   # [similar structure to vacm1]
 └── virtual-machines/                   # VM definitions and networking
     ├── localnet.yaml                   # Local network bridge mapping
     ├── vsno/                           # SNO VM configurations
     │   └── sno100/                     # SNO100 cluster VMs
+    │       ├── kustomization.yaml      # Kustomize configuration
+    │       ├── ns.yaml                 # Namespace definition
+    │       ├── network-attachment-definition.yaml
+    │       └── vm-sno100.yaml          # SNO VM definition
     ├── vacm1/                          # VACM1 cluster VMs
     │   ├── kustomization.yaml          # Kustomize configuration
     │   ├── ns.yaml                     # Namespace definition
@@ -58,7 +70,13 @@ This repository depends on external tools:
 
 ### ABI Configuration Files
 
-The `abi-configs/` directory contains cluster-specific configurations:
+The `abi-configs/` directory contains cluster-specific configurations and day2 operations manifests:
+
+#### Day2 Operations
+The `extra-manifests/` subdirectory contains post-installation configurations for additional cluster features:
+- **Local Storage**: Configures local volume discovery and storage classes for OpenShift Data Foundation
+- **OpenShift Data Foundation (ODF)**: Storage cluster configurations for persistent storage
+- **Red Hat Advanced Cluster Management (RHACM)**: Multi-cluster management configurations
 
 #### SNO Configuration (`sno100.yaml`)
 ```yaml
@@ -96,13 +114,22 @@ iso:
   address: http://192.168.58.15/iso/sno100.iso
 ```
 
-#### MNO Configuration (`vacm1.yaml` example)
+#### MNO Configuration Examples
+
+##### Dual-Stack Configuration (`vacm1.yaml`)
+VACM1 is configured as a dual-stack cluster supporting both IPv4 and IPv6:
+
 ```yaml
+#dual-stack example
 cluster:
   domain: outbound.vz.bos2.lab
   name: vacm1
-  apiVIPs: ["192.168.58.50"]
-  ingressVIPs: ["192.168.58.54"]
+  apiVIPs:
+    - 192.168.58.50      # IPv4 API VIP
+    - 2600:52:7:58::50   # IPv6 API VIP
+  ingressVIPs:
+    - 192.168.58.54      # IPv4 Ingress VIP
+    - 2600:52:7:58::54   # IPv6 Ingress VIP
 
 hosts:
   common:
@@ -112,6 +139,12 @@ hosts:
       machine_network_cidr: 192.168.58.0/25
       dns: 192.168.58.15
       gateway: 192.168.58.1
+    ipv6:
+      enabled: true
+      dhcp: false
+      machine_network_cidr: 2600:52:7:58::/64
+      dns: 2600:52:7:58::15
+      gateway: 2600:52:7:58::1
     disk: /dev/vda
 
   masters:
@@ -120,7 +153,56 @@ hosts:
       mac: de:ad:be:ff:20:00
       ipv4:
         ip: 192.168.58.51
-    # ... additional masters
+      ipv6:
+        ip: 2600:52:7:58::51
+    # ... additional masters with both IPv4 and IPv6 addresses
+
+day2:
+  operators:
+    odf:
+      dual_stack: true              # Enable dual-stack for ODF
+      storage_device_count: 3
+```
+
+##### Single IPv4 Configuration (`vacm2.yaml`)
+VACM2 is configured as a single-stack IPv4-only cluster:
+
+```yaml
+#single-stack example
+cluster:
+  domain: outbound.vz.bos2.lab
+  name: vacm2
+  apiVIPs:
+    - 192.168.58.70      # IPv4 API VIP only
+  ingressVIPs:
+    - 192.168.58.74      # IPv4 Ingress VIP only
+
+hosts:
+  common:
+    ipv4:
+      enabled: true
+      dhcp: false
+      machine_network_cidr: 192.168.58.0/25
+      dns: 192.168.58.15
+      gateway: 192.168.58.1
+    ipv6:
+      enabled: false       # IPv6 disabled
+    disk: /dev/vda
+
+  masters:
+    - hostname: master1.vacm2.outbound.vz.bos2.lab
+      interface: ens1f0
+      mac: de:ad:be:ff:40:00
+      ipv4:
+        ip: 192.168.58.71  # IPv4 address only
+    # ... additional masters with IPv4 addresses only
+
+day2:
+  operators:
+    odf:
+      dual_stack: false            # Disable dual-stack for ODF
+      ip_family: IPv4              # Specify IPv4 family
+      storage_device_count: 3
 ```
 
 ### Virtual Machine Specifications
@@ -181,9 +263,13 @@ This script:
 ./install-mno.sh <cluster-name>
 ```
 
-Example:
+Examples:
 ```bash
+# Deploy dual-stack cluster (VACM1)
 ./install-mno.sh vacm1
+
+# Deploy single IPv4 cluster (VACM2)
+./install-mno.sh vacm2
 ```
 
 This script provides a complete automated deployment workflow:
@@ -196,27 +282,56 @@ This script provides a complete automated deployment workflow:
 7. Powers on all master VMs using `virtctl`
 8. Monitors the installation progress via the Assisted Service API
 9. Waits for cluster stability (5-minute minimum stable period)
-10. Provides detailed progress reporting throughout the process
+10. Executes day2 operations (local storage, ODF, RHACM configurations)
+11. Provides detailed progress reporting throughout the process
 
 **Features**:
 - **Automated monitoring**: Tracks installation progress and completion
 - **DataVolume readiness**: Ensures VMs are ready before powering on
 - **Cluster stability**: Waits for cluster to reach stable state
+- **Day2 operations**: Automatically configures local storage, ODF, and RHACM
 - **Progress reporting**: Shows installation percentage and status
 - **Error handling**: Includes timeout and retry mechanisms
 
 ## Network Configuration
 
+### Cluster Network Types
+
+#### Dual-Stack Configuration (VACM1)
+VACM1 is configured with dual-stack networking supporting both IPv4 and IPv6:
+
+**Key Features:**
+- **API VIPs**: Both IPv4 (192.168.58.50) and IPv6 (2600:52:7:58::50) endpoints
+- **Ingress VIPs**: Both IPv4 (192.168.58.54) and IPv6 (2600:52:7:58::54) endpoints
+- **Machine Networks**: 
+  - IPv4: 192.168.58.0/25
+  - IPv6: 2600:52:7:58::/64
+- **DNS**: Dual-stack DNS servers (IPv4: 192.168.58.15, IPv6: 2600:52:7:58::15)
+- **ODF Configuration**: `dual_stack: true` for storage cluster
+
+#### Single IPv4 Configuration (VACM2)
+VACM2 is configured with single-stack IPv4-only networking:
+
+**Key Features:**
+- **API VIPs**: IPv4 only (192.168.58.70)
+- **Ingress VIPs**: IPv4 only (192.168.58.74)
+- **Machine Network**: IPv4 only (192.168.58.0/25)
+- **DNS**: IPv4 only (192.168.58.15)
+- **IPv6**: Explicitly disabled (`enabled: false`)
+- **ODF Configuration**: `dual_stack: false`, `ip_family: IPv4`
+
 ### Local Network Bridge Mapping
 The `localnet.yaml` file configures OVN bridge mappings:
 - Maps `localnet-network` to the `br-ex` bridge
 - Applied to worker nodes for VM networking
+- Supports both dual-stack and single-stack configurations
 
 ### Network Attachment Definition
 Each cluster uses a `NetworkAttachmentDefinition` for VM networking:
 - **Type**: `ovn-k8s-cni-overlay`
 - **Topology**: `localnet`
 - **CNI Version**: 0.3.1
+- **Compatibility**: Works with both dual-stack and single IPv4 configurations
 
 ## VM Management
 
@@ -248,6 +363,23 @@ virtctl console <vm-name> -n <namespace>
 2. Create VM definitions in `virtual-machines/`
 3. Update MAC addresses and IP configurations
 4. Ensure unique cluster names and namespaces
+5. (Optional) Create day2 operations manifests in `abi-configs/extra-manifests/<cluster-name>/day2/`
+
+### Configuring Day2 Operations
+Day2 operations are automatically executed for MNO clusters if the corresponding manifests exist:
+
+#### Local Storage Configuration
+- `01-local-vole-discovery.yaml`: Enables automatic discovery of local storage devices
+- `02-odf-localdisk.yaml`: Creates LocalVolumeSet for OpenShift Data Foundation
+
+#### OpenShift Data Foundation (ODF)
+- `03-odf-storagecluster.yaml.j2`: Configures the storage cluster with customizable parameters
+  - `storage_device_count`: Number of storage devices (default: 3)
+  - `dual_stack`: Enable dual-stack networking (true for VACM1, false for VACM2)
+  - `ip_family`: IP family configuration (not used when dual_stack is true, set to IPv4 for VACM2)
+
+#### Red Hat Advanced Cluster Management
+- Additional RHACM configurations can be placed in the `rhacm/` subdirectory
 
 ### Modifying VM Resources
 Edit the VM YAML files to adjust:
@@ -272,6 +404,10 @@ Modify network configurations in:
 5. **DataVolume timeout**: If DataVolumes don't become ready within 10 minutes, check storage provisioning
 6. **Installation monitoring fails**: Verify SSH access to the rendezvous node and assisted service availability
 7. **Cluster stability timeout**: The MNO script waits for 5-minute stability; check cluster health during this phase
+8. **Day2 operations fail**: Check if extra-manifests directory exists and manifests are valid YAML
+9. **ODF storage issues**: Verify local storage devices are available and meet minimum size requirements (100Gi)
+10. **Dual-stack networking issues**: For VACM1, ensure IPv6 connectivity and proper DNS resolution for both IP families
+11. **Single-stack networking issues**: For VACM2, verify IPv4 connectivity and that IPv6 is properly disabled
 
 ### Debugging Commands
 ```bash
@@ -295,6 +431,32 @@ oc adm wait-for-stable-cluster --minimum-stable-period=5m
 
 # Check assisted service logs (on rendezvous node)
 ssh core@<rendezvous-ip> journalctl -u assisted-service
+
+# Check day2 operations status
+oc get localvolumediscovery -n openshift-local-storage
+oc get localvolumeset -n openshift-local-storage
+oc get storagecluster -n openshift-storage
+
+# Check ODF operator status
+oc get csv -n openshift-storage | grep odf
+oc get pods -n openshift-storage
+
+# Check local storage operator
+oc get csv -n openshift-local-storage | grep local-storage
+oc get pods -n openshift-local-storage
+
+# Check network configuration
+oc get nodes -o wide  # Shows both IPv4 and IPv6 addresses for dual-stack
+oc get services -A | grep -E "(api|router)"  # Check API and ingress services
+oc get network.config.openshift.io cluster -o yaml  # Check cluster network config
+
+# For dual-stack clusters (VACM1)
+ping6 2600:52:7:58::50  # Test IPv6 API VIP connectivity
+nslookup api.vacm1.outbound.vz.bos2.lab 2600:52:7:58::15  # Test IPv6 DNS
+
+# For single IPv4 clusters (VACM2)
+ping 192.168.58.70  # Test IPv4 API VIP connectivity
+nslookup api.vacm2.outbound.vz.bos2.lab 192.168.58.15  # Test IPv4 DNS
 ```
 
 ## Dependencies and Requirements
@@ -316,316 +478,14 @@ ssh core@<rendezvous-ip> journalctl -u assisted-service
 
 ## Execution Example
 
-### MNO
+### MNO Dual-Stack Cluster (VACM1)
 
-```
-# ./install-mno.sh vacm2
-Will use /root/github/openshift-on-openshift-virtualization/mno-with-abi/instances/vacm2/config-resolved.yaml as the configuration in other mno-* scripts.
-Container runtime crun(4.18+):                         default
-Red Hat Advanced Cluster Management for Kubernetes     enabled
-Topology Aware Lifecycle Manager                       enabled
-OpenShift Data Foundation                              enabled
-Copy customized CRs from extra-manifests folder if present
+For a complete detailed execution log of the dual-stack VACM1 cluster deployment, including day2 operations, see [logs/vacm1.md](logs/vacm1.md).
 
-Generating boot image...
+The log shows the complete deployment process including:
+- ISO generation and VM creation
+- Installation monitoring with progress tracking  
+- Cluster stability verification
+- Day2 operations execution (local storage, ODF, RHACM configurations)
+- Final cluster status with all operators installed
 
-INFO Configuration has 3 master replicas and 0 worker replicas
-INFO The rendezvous host IP (node0 IP) is 192.168.58.71
-INFO Extracting base ISO from release payload
-INFO Verifying cached file
-INFO Using cached Base ISO /root/.cache/agent/image_cache/coreos-x86_64.iso
-INFO Consuming Agent Config from target directory
-INFO Consuming Install Config from target directory
-INFO Consuming Extra Manifests from target directory
-INFO Generated ISO at /root/github/openshift-on-openshift-virtualization/mno-with-abi/instances/vacm2/agent.x86_64.iso.
-
-------------------------------------------------
-kubeconfig: /root/github/openshift-on-openshift-virtualization/mno-with-abi/instances/vacm2/auth/kubeconfig.
-kubeadmin password: /root/github/openshift-on-openshift-virtualization/mno-with-abi/instances/vacm2/auth/kubeadmin-password.
-------------------------------------------------
-
-Next step: Go to your BMC console and boot the node from ISO: /root/github/openshift-on-openshift-virtualization/mno-with-abi/instances/vacm2/agent.x86_64.iso.
-You can also run ./mno-install.sh to boot the node from the image automatically if you have a HTTP server serves the image.
-Enjoy!
-ISO created and copied to /var/www/html/iso/vacm2.iso, which is served by the web server http://192.168.58.15/iso
-
-Creating the VMs...
-namespace/vacm2 unchanged
-networkattachmentdefinition.k8s.cni.cncf.io/localnet-network unchanged
-virtualmachine.kubevirt.io/master1 created
-virtualmachine.kubevirt.io/master2 created
-virtualmachine.kubevirt.io/master3 created
-
-Waiting for all the VMs being ready...
-datavolume.cdi.kubevirt.io/master1-cdrom phase null is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master1-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master1-data phase ImportScheduled is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master1-data DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master1-rootdisk phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master1-rootdisk DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master2-cdrom phase ImportScheduled is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master2-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master3-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master3-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master1-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master1-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master2-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master2-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master2-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master2-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master2-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master2-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master2-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master2-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/master2-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/master2-cdrom DataVolume to be and succeed...
-All the VMs are ready to power on.
-Powering on the VMs to start the installation.
-VM master1 was scheduled to start
-VM master2 was scheduled to start
-VM master3 was scheduled to start
-
-Monitoring the installation...
-Fetching the API token...
-API token: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3NjaGVtZSI6InVzZXJBdXRoIn0.9yJ-OWjWZRixvR2dMZtqGlvGTdGyPn2MbKhxi-bgABxCZjSXUw9b1OZC4aXUFwz5AsuuTnVoRxjqix5YZXebEA
-
-Fetching the Assisted REST URL...
-Assisted REST URL: http://192.168.58.71:8090/api/assisted-install/v2/clusters
-
-.......
-Installing in progress...
--------------------------------
-{"enabled_host_count":3,"name":"vacm2","status":"insufficient","status_info":"Cluster is not ready for install","status_updated_at":"2025-07-11T19:45:34.464Z","total_host_count":3,"updated_at":"2025-07-11T19:45:42.810576Z","user_name":"admin","validations_info":{"configuration":[{"status":"success","message":"Platform requirements satisfied"},{"status":"success","message":"The pull secret is set."}],"hosts-data":[{"status":"failure","message":"The cluster has hosts that are not ready to install."},{"status":"success","message":"The cluster has the exact amount of dedicated control plane nodes."}],"network":[{"status":"success","message":"API virtual IPs are defined."},{"status":"failure","message":"api vips <192.168.58.70> are not verified yet."},{"status":"success","message":"The Cluster Network CIDR is defined."},{"status":"success","message":"The base domain is defined."},{"status":"success","message":"Ingress virtual IPs are defined."},{"status":"failure","message":"ingress vips <192.168.58.74> are not verified yet."},{"status":"success","message":"The Machine Network CIDR is defined."},{"status":"success","message":"The Cluster Machine CIDR is equivalent to the calculated CIDR."},{"status":"success","message":"The Cluster Network prefix is valid."},{"status":"success","message":"The cluster has a valid network type"},{"status":"success","message":"Same address families for all networks."},{"status":"success","message":"No CIDRS are overlapping."},{"status":"success","message":"No ntp problems found"},{"status":"success","message":"The Service Network CIDR is defined."}],"operators":[{"status":"success","message":"cnv is disabled"},{"status":"success","message":"lso is disabled"},{"status":"success","message":"lvm is disabled"},{"status":"success","message":"mce is disabled"},{"status":"success","message":"mtv is disabled"},{"status":"success","message":"node-feature-discovery is disabled"},{"status":"success","message":"nvidia-gpu is disabled"},{"status":"success","message":"odf is disabled"},{"status":"success","message":"openshift-ai is disabled"},{"status":"success","message":"pipelines is disabled"},{"status":"success","message":"serverless is disabled"},{"status":"success","message":"servicemesh is disabled"}]}}
--------------------------------
-
-Installation in progress: completed 10/100
-Installation in progress: completed 35/100........
-Installation in progress: completed 45/100....
-Installation in progress: completed 50/100.......
-Installation in progress: completed 59/100
-Installation in progress: completed 65/100..................
-Installation in progress: completed 68/100
--------------------------------
-Nodes Rebooted...
-19 minutes and 21 seconds elapsed.
-Waiting for the cluster to be stable...
-Waiting for the cluster to be stable...
-clusteroperators/authentication is unavailable and degraded at 2025-07-11T20:02:21Z
-......................................................................................
-clusteroperators/authentication is still unavailable and degraded after 1m10s
-.............................................................................
-clusteroperators/authentication is still unavailable and progressing and degraded after 2m20s
-.............................................................................................
-clusteroperators/authentication is still unavailable and progressing after 4m40s
-...........................................................................
-..
-......
-All clusteroperators are still stable after 4m30s
-.....
-All clusteroperators are stable
-Virtualization cluster info:
---------------------------------
-NAME                                 STATUS   ROLES                         AGE   VERSION
-master1.vacm2.outbound.vz.bos2.lab   Ready    control-plane,master,worker   18m   v1.31.9
-master2.vacm2.outbound.vz.bos2.lab   Ready    control-plane,master,worker   31m   v1.31.9
-master3.vacm2.outbound.vz.bos2.lab   Ready    control-plane,master,worker   31m   v1.31.9
---------------------------------
-NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
-version   4.18.19   True        False         11m     Cluster version is 4.18.19
---------------------------------
-NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
-authentication                             4.18.19   True        False         False      12m
-baremetal                                  4.18.19   True        False         False      27m
-cloud-controller-manager                   4.18.19   True        False         False      31m
-cloud-credential                           4.18.19   True        False         False      32m
-cluster-autoscaler                         4.18.19   True        False         False      27m
-config-operator                            4.18.19   True        False         False      28m
-console                                    4.18.19   True        False         False      17m
-control-plane-machine-set                  4.18.19   True        False         False      27m
-csi-snapshot-controller                    4.18.19   True        False         False      28m
-dns                                        4.18.19   True        False         False      27m
-etcd                                       4.18.19   True        False         False      26m
-image-registry                             4.18.19   True        False         False      17m
-ingress                                    4.18.19   True        False         False      21m
-insights                                   4.18.19   True        False         False      27m
-kube-apiserver                             4.18.19   True        False         False      24m
-kube-controller-manager                    4.18.19   True        False         False      25m
-kube-scheduler                             4.18.19   True        False         False      24m
-kube-storage-version-migrator              4.18.19   True        False         False      28m
-machine-api                                4.18.19   True        False         False      24m
-machine-approver                           4.18.19   True        False         False      28m
-machine-config                             4.18.19   True        False         False      27m
-marketplace                                4.18.19   True        False         False      27m
-monitoring                                 4.18.19   True        False         False      15m
-network                                    4.18.19   True        False         False      28m
-node-tuning                                4.18.19   True        False         False      18m
-olm                                        4.18.19   True        False         False      15m
-openshift-apiserver                        4.18.19   True        False         False      19m
-openshift-controller-manager               4.18.19   True        False         False      24m
-openshift-samples                          4.18.19   True        False         False      19m
-operator-lifecycle-manager                 4.18.19   True        False         False      27m
-operator-lifecycle-manager-catalog         4.18.19   True        False         False      27m
-operator-lifecycle-manager-packageserver   4.18.19   True        False         False      19m
-service-ca                                 4.18.19   True        False         False      28m
-storage                                    4.18.19   True        False         False      28m
---------------------------------
-NAME                                       DISPLAY                                      VERSION
-advanced-cluster-management.v2.13.3        Advanced Cluster Management for Kubernetes   2.13.3
-cephcsi-operator.v4.18.6-rhodf             CephCSI operator                             4.18.6-rhodf
-mcg-operator.v4.18.6-rhodf                 NooBaa Operator                              4.18.6-rhodf
-ocs-client-operator.v4.18.6-rhodf          OpenShift Data Foundation Client             4.18.6-rhodf
-ocs-operator.v4.18.6-rhodf                 OpenShift Container Storage                  4.18.6-rhodf
-odf-csi-addons-operator.v4.18.6-rhodf      CSI Addons                                   4.18.6-rhodf
-odf-dependencies.v4.18.6-rhodf             Data Foundation Dependencies                 4.18.6-rhodf
-odf-operator.v4.18.6-rhodf                 OpenShift Data Foundation                    4.18.6-rhodf
-odf-prometheus-operator.v4.18.6-rhodf      Prometheus Operator                          4.18.6-rhodf
-packageserver                              Package Server                               0.0.1-snapshot
-recipe.v4.18.6-rhodf                       Recipe                                       4.18.6-rhodf
-rook-ceph-operator.v4.18.6-rhodf           Rook-Ceph                                    4.18.6-rhodf
-topology-aware-lifecycle-manager.v4.18.0   Topology Aware Lifecycle Manager             4.18.0
-```
-
-
-### SNO
-
-```
-# ./install-sno.sh sno100
-Creating workspace: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100.
-Will use /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/config-resolved.yaml as the configuration in other sno-* scripts.
-You are going to download OpenShift installer stable-4.18: 4.18.19
-
-Enabling day1 configuration...
-Workload partitioning:                                   enabled(through install-config)
-SNO boot accelerate:                                     enabled
-kdump, blacklist_ice(for HPE):                           disabled
-Container runtime crun(4.18+):                           default
-SR-IOV kernel(intel iommu):                              enabled
-- 07-sriov-related-kernel-args-master.intel.yaml         added
-Set rcu_normal=1 after node reboot:                      enabled
-Sync time once after node reboot:                        enabled
-default cgv2, enable cgroup v1:                          false
-Container storage partition:                             disabled
-
-Enabling operators...
-PTP Operator                                             enabled
-Local Storage Operator                                   enabled
-Red Hat Advanced Cluster Management for Kubernetes       disabled
-Red Hat OpenShift GitOps                                 disabled
-Topology Aware Lifecycle Manager                         disabled
-SR-IOV Network Operator for Openshift                    enabled
-Logical Volume Manager Storage Operator                  disabled
-Multicluster Engine for Kubernetes                       disabled
-Multicluster Global Hub Operator                         disabled
-OpenShift Logging Operator                               disabled
-Intel SRIOV-FEC Operator                                 disabled
-OpenShift API for Data Protection Operator               disabled
-OpenShift Lifecycle Agent Operator                       disabled
-MetalLB Operator                                         disabled
-NMState Operator                                         disabled
-OpenShift Virtualization                                 disabled
-Node Feature Discovery Operator                          disabled
-NVIDIA GPU Operator                                      disabled
-
-Configuring operators...
-
-
-Generating boot image...
-
-INFO Configuration has 1 master replicas and 0 worker replicas
-INFO The rendezvous host IP (node0 IP) is 192.168.58.100
-INFO Extracting base ISO from release payload
-INFO Verifying cached file
-INFO Using cached Base ISO /root/.cache/agent/image_cache/coreos-x86_64.iso
-INFO Consuming Extra Manifests from target directory
-INFO Consuming Install Config from target directory
-INFO Consuming Agent Config from target directory
-INFO Generated ISO at /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/agent.x86_64.iso.
-
-------------------------------------------------
-kubeconfig: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/auth/kubeconfig.
-kubeadmin password: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/auth/kubeadmin-password.
-------------------------------------------------
-
-Next step: Go to your BMC console and boot the node from ISO: /root/github/openshift-on-openshift-virtualization/sno-agent-based-installer/instances/sno100/agent.x86_64.iso.
-You can also run ./sno-install.sh to boot the node from the image automatically if you have a HTTP server serves the image.
-Enjoy!
-ISO created and copied to /var/www/html/iso/sno100.iso, which is served by the web server http://192.168.58.15/iso
-
-Creating the VM...
-namespace/sno100 unchanged
-networkattachmentdefinition.k8s.cni.cncf.io/localnet-network unchanged
-virtualmachine.kubevirt.io/sno100 created
-
-Waiting for the VM being ready to power on...
-Waiting for the VM's DataVolume to be created...
-datavolume.cdi.kubevirt.io/sno100-cdrom phase ImportScheduled is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/sno100-data phase null is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-data DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/sno100-rootdisk phase ImportScheduled is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-rootdisk DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/sno100-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-cdrom DataVolume to be and succeed...
-datavolume.cdi.kubevirt.io/sno100-cdrom phase ImportInProgress is not Succeeded yet; Waiting for the datavolume.cdi.kubevirt.io/sno100-cdrom DataVolume to be and succeed...
-The VM is ready to power on.
-
-Powering on the VM to start the installation.
-VM sno100 was scheduled to start
-
-Monitoring the installation...
-Fetching the API token...
-API token: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3NjaGVtZSI6InVzZXJBdXRoIn0.akDrPTcC7gfJ422uArBI5NWpbeztNgByjTy_uznkSf5LJcZVRPedIzwv1o4d8HlLB7UqWCAiaK-oQCdDOZiY1A
-
-Fetching the Assisted REST URL...
-Assisted REST URL: http://api.sno100.outbound.vz.bos2.lab:8090/api/assisted-install/v2/clusters
-
-......
-Installing in progress...
--------------------------------
-{"enabled_host_count":1,"name":"sno100","status":"insufficient","status_info":"Cluster is not ready for install","status_updated_at":"2025-07-11T22:05:12.273Z","total_host_count":1,"updated_at":"2025-07-11T22:05:12.566566Z","user_name":"admin"}
--------------------------------
-{"enabled_host_count":1,"name":"sno100","status":"insufficient","status_info":"Cluster is not ready for install","status_updated_at":"2025-07-11T22:05:12.273Z","total_host_count":1,"updated_at":"2025-07-11T22:05:17.882968Z","user_name":"admin","validations_info":{"configuration":[{"status":"success","message":"Platform requirements satisfied"},{"status":"success","message":"The pull secret is set."}],"hosts-data":[{"status":"failure","message":"The cluster has hosts that are not ready to install."},{"status":"success","message":"The cluster has the exact amount of dedicated control plane nodes."}],"network":[{"status":"success","message":"API virtual IPs are not required: User Managed Networking"},{"status":"success","message":"API virtual IPs are not required: User Managed Networking"},{"status":"success","message":"The Cluster Network CIDR is defined."},{"status":"success","message":"The base domain is defined."},{"status":"success","message":"Ingress virtual IPs are not required: User Managed Networking"},{"status":"success","message":"Ingress virtual IPs are not required: User Managed Networking"},{"status":"success","message":"The Machine Network CIDR is defined."},{"status":"success","message":"The Cluster Machine CIDR is not required: User Managed Networking"},{"status":"success","message":"The Cluster Network prefix is valid."},{"status":"success","message":"The cluster has a valid network type"},{"status":"success","message":"Same address families for all networks."},{"status":"success","message":"No CIDRS are overlapping."},{"status":"success","message":"No ntp problems found"},{"status":"success","message":"The Service Network CIDR is defined."}],"operators":[{"status":"success","message":"cnv is disabled"},{"status":"success","message":"lso is disabled"},{"status":"success","message":"lvm is disabled"},{"status":"success","message":"mce is disabled"},{"status":"success","message":"mtv is disabled"},{"status":"success","message":"node-feature-discovery is disabled"},{"status":"success","message":"nvidia-gpu is disabled"},{"status":"success","message":"odf is disabled"},{"status":"success","message":"openshift-ai is disabled"},{"status":"success","message":"pipelines is disabled"},{"status":"success","message":"serverless is disabled"},{"status":"success","message":"servicemesh is disabled"}]}}
-
-Installation in progress: completed 10/100
-Installation in progress: completed 39/100........
-Installation in progress: completed 49/100....
--------------------------------
-Node Rebooted...
-Waiting for the cluster to be stable...
-failed to list clusteroperators: Get "https://api.sno100.outbound.vz.bos2.lab:6443/apis/config.openshift.io/v1/clusteroperators": dial tcp 192.168.58.100:6443: connect: connection refused
-............................................
-clusteroperators/authentication is still unavailable and progressing and degraded after 20s
-...........................................................................................................................................
-clusteroperators/authentication is still unavailable and progressing and degraded after 1m30s
-..........................................................................................................................................
-clusteroperators/authentication is still unavailable and degraded after 14m50s
-....
-clusteroperators/monitoring is still unavailable and progressing and degraded after 26m20s
-.......
-clusteroperators/kube-controller-manager is still progressing after 20s
-.......
-All clusteroperators are still stable after 30s
-....
-All clusteroperators are stable
-Virtualization cluster info:
---------------------------------
-NAME                          STATUS   ROLES                         AGE   VERSION
-sno100.outbound.vz.bos2.lab   Ready    control-plane,master,worker   28m   v1.31.9
---------------------------------
-NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
-version   4.18.19   True        False         107s    Cluster version is 4.18.19
---------------------------------
-NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
-authentication                             4.18.19   True        False         False      3m21s
-config-operator                            4.18.19   True        False         False      26m
-dns                                        4.18.19   True        False         False      7m18s
-etcd                                       4.18.19   True        False         False      14m
-ingress                                    4.18.19   True        False         False      26m
-kube-apiserver                             4.18.19   True        False         False      7m25s
-kube-controller-manager                    4.18.19   True        False         False      13m
-kube-scheduler                             4.18.19   True        False         False      13m
-kube-storage-version-migrator              4.18.19   True        False         False      26m
-machine-approver                           4.18.19   True        False         False      26m
-machine-config                             4.18.19   True        False         False      26m
-monitoring                                 4.18.19   True        False         False      2m5s
-network                                    4.18.19   True        False         False      26m
-node-tuning                                4.18.19   True        False         False      26m
-openshift-apiserver                        4.18.19   True        False         False      7m24s
-openshift-controller-manager               4.18.19   True        False         False      15m
-operator-lifecycle-manager                 4.18.19   True        False         False      20m
-operator-lifecycle-manager-catalog         4.18.19   True        False         False      20m
-operator-lifecycle-manager-packageserver   4.18.19   True        False         False      7m33s
-service-ca                                 4.18.19   True        False         False      26m
---------------------------------
-NAME                                          DISPLAY                   VERSION
-local-storage-operator.v4.18.0-202506241202   Local Storage             4.18.0-202506241202
-packageserver                                 Package Server            0.0.1-snapshot
-ptp-operator.v4.18.0-202506260833             PTP Operator              4.18.0-202506260833
-sriov-network-operator.v4.18.0-202506230505   SR-IOV Network Operator   4.18.0-202506230505
-
-```
