@@ -1,3 +1,4 @@
+#dual-stack example
 cluster:
   domain: outbound.vz.bos2.lab
   name: vacm1
