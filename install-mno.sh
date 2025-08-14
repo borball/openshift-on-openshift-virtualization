@@ -271,15 +271,6 @@ print_cluster_info() {
   oc get csv -A -o custom-columns="0AME:.metadata.name,DISPLAY:.spec.displayName,VERSION:.spec.version" | sort -f | uniq | sed s/0AME/NAME/
 }
 
-day2_operations() {
-  echo "Copying extra manifests for day2 operations from $basedir/abi-configs/extra-manifests/$cluster/day2/ to $mno_workspace/extra-manifests/day2/"
-  cp -r $basedir/abi-configs/extra-manifests/$cluster/day2/* $mno_workspace/extra-manifests/day2/
-  cd $mno_workspace
-  ./mno-day2.sh $cluster
-
-  echo "day2 operations done."
-}
-
 create_iso
 create_vms
 vms_ready_to_power_on
@@ -288,5 +279,4 @@ monitor_installation
 wait_for_stable_cluster 60
 approve_pending_install_plans
 print_cluster_info
-day2_operations
-cd $basedir
+echo "Installation done, please check the cluster status and perform day2 operations with script mno-day2.sh."
