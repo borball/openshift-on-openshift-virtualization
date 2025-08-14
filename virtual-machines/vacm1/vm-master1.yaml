@@ -56,7 +56,7 @@ spec:
       architecture: amd64
       domain:
         cpu:
-          cores: 8
+          cores: 10
           sockets: 1
           threads: 2
         devices:
@@ -78,7 +78,7 @@ spec:
               model: virtio
               name: enp1s0
         memory:
-          guest: 32Gi
+          guest: 40Gi
       networks:
         - multus:
             networkName: localnet-network
