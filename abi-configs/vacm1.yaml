@@ -18,7 +18,7 @@ hosts:
       dns: 192.168.58.15
       gateway: 192.168.58.1
     ipv6:
-      enabled: false
+      enabled: true
       dhcp: false
       machine_network_cidr: 2600:52:7:58::/64
       machine_network_prefix: 64
