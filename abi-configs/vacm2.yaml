@@ -25,16 +25,25 @@ hosts:
 
   masters:
     - hostname: master1.vacm2.outbound.vz.bos2.lab
+      labels:
+        # marked for providing disk for ODF deployment
+        - cluster.ocs.openshift.io/openshift-storage=
       interface: ens1f0
       mac: de:ad:be:ff:40:00
       ipv4:
         ip: 192.168.58.71
     - hostname: master2.vacm2.outbound.vz.bos2.lab
+      labels:
+        # marked for providing disk for ODF deployment
+        - cluster.ocs.openshift.io/openshift-storage=
       interface: ens1f0
       mac: de:ad:be:ff:40:10
       ipv4:
         ip: 192.168.58.72
     - hostname: master3.vacm2.outbound.vz.bos2.lab
+      labels:
+        # marked for providing disk for ODF deployment
+        - cluster.ocs.openshift.io/openshift-storage=
       interface: ens1f0
       mac: de:ad:be:ff:40:20
       ipv4:
@@ -42,16 +51,31 @@ hosts:
 
 day1:
   operators:
+    local-storage:
+      enabled: true
     rhacm:
       enabled: true
+      version: advanced-cluster-management.v2.13.3
     talm:
       enabled: true
     odf:
       enabled: true
     gitops:
       enabled: true
+      version: openshift-gitops-operator.v1.14.4
 
 day2:
+  node_labels_enabled: true
+  operators:
+    local-storage: {}
+    odf:
+      # for dual stack, set to true
+      # other wise, set to false and specify the ip_family IPv6 or IPv4
+      dual_stack: false
+      ip_family: IPv4
+      # number of storage device in the storage device set
+      # should be number of node marked for providing disk for ODF
+      storage_device_count: 3
 
 pull_secret: /root/pull-secret.json
 ssh_key: /root/.ssh/id_rsa.pub
