@@ -244,7 +244,7 @@ day2_operations() {
   echo "Copying extra manifests for day2 operations from $basedir/abi-configs/extra-manifests/$cluster/day2/ to $mno_workspace/extra-manifests/day2/"
   cp -r $basedir/abi-configs/extra-manifests/$cluster/day2/* $mno_workspace/extra-manifests/day2/
   cd $mno_workspace
-  ./mno-day2.sh $config_file
+  ./mno-day2.sh $cluster
 
   echo "day2 operations done."
 }
