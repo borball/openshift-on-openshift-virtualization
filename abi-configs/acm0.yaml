@@ -1,0 +1,73 @@
+cluster:
+  domain: outbound.vz.bos2.lab
+  name: acm0
+
+host:
+  interface: ens1f0
+  hostname: acm0.outbound.vz.bos2.lab
+  mac: de:ad:be:00:00:00
+  ipv4:
+    enabled: true
+    dhcp: false
+    ip: 192.168.58.75
+    dns:
+      - 192.168.58.15
+    gateway: 192.168.58.1
+    prefix: 25
+    machine_network_cidr: 192.168.58.0/25
+  disk: /dev/vda
+
+day1:
+  workload_partition: false
+  kdump:
+    enabled: false
+    #set blacklist_ice as true on HPE servers
+    blacklist_ice: false
+  boot_accelerate: false
+  crun: true
+  #4.14, https://issues.redhat.com/browse/OCPBUGS-17660
+  rcu_normal: false
+  #4.14, reduce a node boot and fix a race condition issue in sriov operator
+  sriov_kernel: false
+  #4.14, sync the node time from ntp when node reboot and ptp got involved
+  sync_time_once: false
+  #ztp_hub=true will enable rhacm/lvm/gitops/talm on the cluster
+  ztp_hub: false
+  operators:
+    ptp:
+      enabled: false
+    sriov:
+      enabled: false
+    local-storage:
+      enabled: false
+    lvm:
+      enabled: true
+    rhacm:
+      enabled: true
+    gitops:
+      enabled: true
+    talm:
+      enabled: true
+
+day2:
+  node_labels_enabled: false
+  disable_operator_auto_upgrade: true
+  lvm:
+    device_classes:
+      - name: "vg1"
+        default: true
+        thin_pool_name: "vg1-vdb-pool"
+        selector:
+          paths:
+            - "/dev/vdb"
+  rhacm: {}
+
+proxy:
+  enabled: false
+
+ssh_key: ${HOME}/.ssh/id_rsa.pub
+pull_secret: ${HOME}/pull-secret.json
+
+
+iso:
+  address: http://192.168.58.15/iso/acm0.iso
