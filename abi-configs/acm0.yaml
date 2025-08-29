@@ -2,13 +2,7 @@ cluster:
   domain: outbound.vz.bos2.lab
   name: acm0
   capabilities:
-    baselineCapabilitySet: None
-    additionalEnabledCapabilities:
-      - baremetal
-      - marketplace
-      - Console
-      - Storage
-      - CSISnapshot
+    baselineCapabilitySet: vCurrent
 
 host:
   interface: ens1f0
