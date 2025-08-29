@@ -235,6 +235,20 @@ approve_pending_install_plans(){
       oc patch $IP --type merge --patch '{"spec":{"approved":true}}'
     done < <(oc get sub -A -o json |
       jq -r '.items[]|select( (.spec.startingCSV != null) and (.status.installedCSV == null) and (.status.installPlanRef != null) )|.status.installPlanRef|"-n \(.namespace) ip \(.name)"')
+
+    if [[ 0 ==  $(oc get sub -A -o json|jq '[.items[]|select(.status.installedCSV==null)]|length') ]]; then
+      echo
+      break
+    fi
+
+    sleep 30
+    echo
+  done
+
+  echo "All operator versions:"
+  oc get csv -A -o custom-columns="0AME:.metadata.name,DISPLAY:.spec.displayName,VERSION:.spec.version" |sort -f|uniq|sed 's/0AME/NAME/'
+}
+
 print_cluster_info() {
   echo "Virtualization cluster info:"
   echo "--------------------------------"
