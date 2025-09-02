@@ -62,7 +62,8 @@ day2:
         selector:
           paths:
             - "/dev/vdb"
-  rhacm: {}
+  extra_manifests:
+    - extra-manifests/day2/rhacm
 
 proxy:
   enabled: false
