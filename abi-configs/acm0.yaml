@@ -63,7 +63,7 @@ day2:
           paths:
             - "/dev/vdb"
   extra_manifests:
-    - extra-manifests/day2/rhacm
+    - extra-manifests/acm0/day2/rhacm
 
 proxy:
   enabled: false

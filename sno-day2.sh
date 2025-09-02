@@ -39,7 +39,8 @@ approve_pending_install_plans(){
 
 day2_operations() {
   echo "Copying extra manifests for day2 operations from $basedir/abi-configs/extra-manifests/$cluster/day2/ to $sno_workspace/extra-manifests/day2/"
-  cp -r $basedir/abi-configs/extra-manifests/$cluster/day2/* $sno_workspace/extra-manifests/day2/
+  mkdir -p $sno_workspace/extra-manifests/$cluster/day2/
+  cp -r $basedir/abi-configs/extra-manifests/$cluster/day2/* $sno_workspace/extra-manifests/$cluster/day2/
   cd $sno_workspace
   ./sno-day2.sh $cluster
 
