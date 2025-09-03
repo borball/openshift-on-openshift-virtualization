@@ -30,7 +30,7 @@ hosts:
     disk: /dev/vda
 
   masters:
-    - hostname: master1.vacm1.outbound.vz.bos2.lab
+    - hostname: acm1-master1.outbound.vz.bos2.lab
       labels:
         # marked for providing disk for ODF deployment
         - cluster.ocs.openshift.io/openshift-storage=
@@ -40,7 +40,7 @@ hosts:
         ip: 192.168.58.51
       ipv6:
         ip: 2600:52:7:58::51
-    - hostname: master2.vacm1.outbound.vz.bos2.lab
+    - hostname: acm1-master2.outbound.vz.bos2.lab
       labels:
         # marked for providing disk for ODF deployment
         - cluster.ocs.openshift.io/openshift-storage=
@@ -50,7 +50,7 @@ hosts:
         ip: 192.168.58.52
       ipv6:
         ip: 2600:52:7:58::52
-    - hostname: master3.vacm1.outbound.vz.bos2.lab
+    - hostname: acm1-master3.outbound.vz.bos2.lab
       labels:
         # marked for providing disk for ODF deployment
         - cluster.ocs.openshift.io/openshift-storage=

@@ -2,8 +2,8 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   labels:
-    app: master2
-  name: master2
+    app: acm2-master2
+  name: acm2-master2
   namespace: vacm2
 spec:
   runStrategy: Halted
