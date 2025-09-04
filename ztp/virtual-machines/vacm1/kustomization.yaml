@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ns.yaml
+  - network-attachment-definition.yaml
+  - vm-master1.yaml
+  - vm-master2.yaml
+  - vm-master3.yaml

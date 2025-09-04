@@ -1,0 +1,77 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  labels:
+    app: acm1-master2
+  name: acm1-master2
+  namespace: vacm1
+spec:
+  runStrategy: Halted
+  dataVolumeTemplates:
+    - kind: DataVolume
+      metadata:
+        name: master2-rootdisk
+        annotations:
+          cdi.kubevirt.io/storage.bind.immediate.requested: "true"
+      spec:
+        source:
+          blank: {}
+          size: 120Gi
+        storage:
+          resources:
+            requests:
+              storage: 120Gi
+    - kind: DataVolume
+      metadata:
+        name: master2-data
+        annotations:
+          cdi.kubevirt.io/storage.bind.immediate.requested: "true"
+      spec:
+        source:
+          blank: {}
+          size: 100Gi
+        storage:
+          resources:
+            requests:
+              storage: 100Gi
+
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: master2
+    spec:
+      architecture: amd64
+      domain:
+        cpu:
+          cores: 10
+          sockets: 1
+          threads: 2
+        devices:
+          disks:
+            - disk:
+                bus: virtio
+              name: rootdisk
+              bootOrder: 1
+            - disk:
+                bus: virtio
+              name: data
+          interfaces:
+            - bridge: { }
+              macAddress: de:ad:be:ff:20:10
+              model: virtio
+              name: enp1s0
+        memory:
+          guest: 40Gi
+      networks:
+        - multus:
+            networkName: localnet-network
+          name: enp1s0
+      terminationGracePeriodSeconds: 180
+      volumes:
+        - dataVolume:
+            name: master2-rootdisk
+          name: rootdisk
+        - dataVolume:
+            name: master2-data
+          name: data
+
