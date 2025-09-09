@@ -22,13 +22,13 @@ spec:
     cephToolbox: {}
   mirroring: {}
   monDataDirHostPath: /var/lib/rook
-  {%- if dual_stack is defined %}
-  dualStack: {{ dual_stack | lower }}
-  {%- endif %}
-  {%- if ip_family is defined %}
   network:
+    {%- if dual_stack is defined %}
+    dualStack: {{ dual_stack | lower }}
+    {%- endif %}
+    {%- if ip_family is defined %}
     ipFamily: {{ ip_family }}
-  {%- endif %}
+    {%- endif %}
   nodeTopologies: {}
   storageDeviceSets:
   - config: {}
