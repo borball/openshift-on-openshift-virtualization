@@ -7,7 +7,7 @@ cluster:
 host:
   interface: ens1f0
   hostname: acm0.outbound.vz.bos2.lab
-  mac: de:ad:be:00:00:00
+  mac: de:ad:be:ee:aa:00
   ipv4:
     enabled: true
     dhcp: false
