@@ -21,6 +21,7 @@ spec:
           resources:
             requests:
               storage: 120Gi
+          storageClassName: ocs-storagecluster-ceph-rbd-virtualization
     - kind: DataVolume
       metadata:
         name: master1-data
@@ -34,7 +35,7 @@ spec:
           resources:
             requests:
               storage: 100Gi
-
+          storageClassName: ocs-storagecluster-ceph-rbd-virtualization
   template:
     metadata:
       labels:

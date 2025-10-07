@@ -45,7 +45,7 @@ fi
 
 sno_workspace=$basedir/sno-agent-based-installer
 iso_dir=/var/www/html/iso
-web_server=http://192.168.58.15/iso
+web_server=192.168.58.15
 domain_name=$(yq '.cluster.domain' $config_file)
 api_fqdn="api."$cluster"."$domain_name
 
@@ -61,9 +61,9 @@ create_iso() {
   fi
   ./sno-iso.sh $config_file stable-4.18
 
-  cp $sno_workspace/instances/$cluster/agent.x86_64.iso $iso_dir/$cluster.iso
+  scp $sno_workspace/instances/$cluster/agent.x86_64.iso $web_server:/var/www/html/iso/$cluster.iso
 
-  echo "ISO created and copied to $iso_dir/$cluster.iso, which is served by the web server $web_server"
+  echo "ISO created and copied to $iso_dir/$cluster.iso which is served by the web server $web_server"
   echo
 }
 

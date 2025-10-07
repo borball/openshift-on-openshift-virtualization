@@ -21,6 +21,7 @@ spec:
           resources:
             requests:
               storage: 120Gi
+          storageClassName: ocs-storagecluster-ceph-rbd-virtualization
     - kind: DataVolume
       metadata:
         name: master3-data
@@ -34,7 +35,7 @@ spec:
           resources:
             requests:
               storage: 100Gi
-
+          storageClassName: ocs-storagecluster-ceph-rbd-virtualization
   template:
     metadata:
       labels:
@@ -51,7 +52,7 @@ spec:
             - disk:
                 bus: virtio
               name: rootdisk
-              bootOrder: 2
+              bootOrder: 1
             - disk:
                 bus: virtio
               name: data
