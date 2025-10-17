@@ -30,11 +30,11 @@ spec:
       spec:
         source:
           blank: {}
-          size: 100Gi
+          size: 200Gi
         storage:
           resources:
             requests:
-              storage: 100Gi
+              storage: 200Gi
           storageClassName: ocs-storagecluster-ceph-rbd-virtualization
   template:
     metadata:
@@ -52,7 +52,7 @@ spec:
             - disk:
                 bus: virtio
               name: rootdisk
-              bootOrder: 1
+              bootOrder: 2
             - disk:
                 bus: virtio
               name: data
@@ -63,7 +63,7 @@ spec:
               model: virtio
               name: enp1s0
         memory:
-          guest: 40Gi
+          guest: 38Gi
       networks:
         - multus:
             networkName: localnet-network
